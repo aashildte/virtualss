@@ -14,7 +14,8 @@ import dolfin as df
 from mpi4py import MPI
 import numpy as np
 
-from virtualss.deformation_functions import *
+from virtualss.deformation_3D import *
+from virtualss.deformation_2D import *
 
 
 def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
@@ -39,14 +40,71 @@ def get_deformation_function_from_keywords(deformation_type, fixed_sides, topolo
 
     """
 
-    fun_overview = {"stretch_ff" : {
+    fun_overview = {
+                    "stretch_ff" : {
                         "noslip" : {
-                            2 : stretch_ff_nonslip_2D,
-                            3 : stretch_ff_nonslip_3D,
+                            2 : stretch_ff_noslip_2D,
+                            3 : stretch_ff_noslip_3D,
                             },
                         "fixed_base" : {
                             2 : stretch_ff_fixed_base_2D,
                             3 : stretch_ff_fixed_base_3D,
+                            },
+                        },
+                    "shear_fs" : {
+                        "fixed_base" : {
+                            2 : shear_fs_fixed_base_2D,
+                            3 : shear_fs_fixed_base_3D,
+                            },
+                        },
+                    "shear_fn" : {
+                        "fixed_base" : {
+                            2 : shear_fn_fixed_base_2D,
+                            3 : shear_fn_fixed_base_3D,
+                            },
+                        },
+                    "shear_sf" : {
+                        "fixed_base" : {
+                            2 : shear_sf_fixed_base_2D,
+                            3 : shear_sf_fixed_base_3D,
+                            },
+                        },
+                    "stretch_ss" : {
+                        "noslip" : {
+                            2 : stretch_ss_noslip_2D,
+                            3 : stretch_ss_noslip_3D,
+                            },
+                        "fixed_base" : {
+                            2 : stretch_ss_fixed_base_2D,
+                            3 : stretch_ss_fixed_base_3D,
+                            },
+                        },
+                    "shear_sn" : {
+                        "fixed_base" : {
+                            2 : shear_sn_fixed_base_2D,
+                            3 : shear_sn_fixed_base_3D,
+                            },
+                        },
+                    "shear_nf" : {
+                        "fixed_base" : {
+                            2 : shear_nf_fixed_base_2D,
+                            3 : shear_nf_fixed_base_3D,
+                            },
+                        },
+                    "shear_ns" : {
+                        "fixed_base" : {
+                            2 : shear_ns_fixed_base_2D,
+                            3 : shear_ns_fixed_base_3D,
+                            },
+                        },
+                    "stretch_nn" : {
+                        "noslip" : {
+                            2 : stretch_nn_noslip_2D,
+                            3 : stretch_nn_noslip_3D,
+                            },
+                        "fixed_base" : {
+                            2 : stretch_nn_fixed_base_2D,
+                            3 : stretch_nn_fixed_base_3D,
                             },
                         },
                     }
