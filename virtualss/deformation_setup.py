@@ -19,9 +19,11 @@ from virtualss.deformation_2D import *
 
 
 def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
-    
-    top_dim = mesh.topology().dim()    
-    define_bnd_fun = get_deformation_function_from_keywords(deformation_type, fixed_sides, top_dim)
+
+    top_dim = mesh.topology().dim()
+    define_bnd_fun = get_deformation_function_from_keywords(
+        deformation_type, fixed_sides, top_dim
+    )
 
     dimensions = get_mesh_dimensions(mesh)
     boundary_markers, ds = set_boundary_markers(mesh, dimensions)
@@ -30,10 +32,12 @@ def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
 
     bcs, bc_fun = define_bnd_fun(L, V, boundary_markers)
 
-    return bcs, bc_fun
+    return bcs, bc_fun, ds
 
 
-def get_deformation_function_from_keywords(deformation_type, fixed_sides, topological_dimensions):
+def get_deformation_function_from_keywords(
+    deformation_type, fixed_sides, topological_dimensions
+):
     """
 
     These functions are all defined in deformation_functions.
@@ -41,76 +45,69 @@ def get_deformation_function_from_keywords(deformation_type, fixed_sides, topolo
     """
 
     fun_overview = {
-                    "stretch_ff" : {
-                        "noslip" : {
-                            2 : stretch_ff_noslip_2D,
-                            3 : stretch_ff_noslip_3D,
-                            },
-                        "fixed_base" : {
-                            2 : stretch_ff_fixed_base_2D,
-                            3 : stretch_ff_fixed_base_3D,
-                            },
-                        },
-                    "shear_fs" : {
-                        "fixed_base" : {
-                            2 : shear_fs_fixed_base_2D,
-                            3 : shear_fs_fixed_base_3D,
-                            },
-                        },
-                    "shear_fn" : {
-                        "fixed_base" : {
-                            2 : shear_fn_fixed_base_2D,
-                            3 : shear_fn_fixed_base_3D,
-                            },
-                        },
-                    "shear_sf" : {
-                        "fixed_base" : {
-                            2 : shear_sf_fixed_base_2D,
-                            3 : shear_sf_fixed_base_3D,
-                            },
-                        },
-                    "stretch_ss" : {
-                        "noslip" : {
-                            2 : stretch_ss_noslip_2D,
-                            3 : stretch_ss_noslip_3D,
-                            },
-                        "fixed_base" : {
-                            2 : stretch_ss_fixed_base_2D,
-                            3 : stretch_ss_fixed_base_3D,
-                            },
-                        },
-                    "shear_sn" : {
-                        "fixed_base" : {
-                            2 : shear_sn_fixed_base_2D,
-                            3 : shear_sn_fixed_base_3D,
-                            },
-                        },
-                    "shear_nf" : {
-                        "fixed_base" : {
-                            2 : shear_nf_fixed_base_2D,
-                            3 : shear_nf_fixed_base_3D,
-                            },
-                        },
-                    "shear_ns" : {
-                        "fixed_base" : {
-                            2 : shear_ns_fixed_base_2D,
-                            3 : shear_ns_fixed_base_3D,
-                            },
-                        },
-                    "stretch_nn" : {
-                        "noslip" : {
-                            2 : stretch_nn_noslip_2D,
-                            3 : stretch_nn_noslip_3D,
-                            },
-                        "fixed_base" : {
-                            2 : stretch_nn_fixed_base_2D,
-                            3 : stretch_nn_fixed_base_3D,
-                            },
-                        },
-                    }
+        "stretch_ff": {
+            "noslip": {
+                2: stretch_ff_noslip_2D,
+                3: stretch_ff_noslip_3D,
+            },
+            "fixed_base": {
+                2: stretch_ff_fixed_base_2D,
+                3: stretch_ff_fixed_base_3D,
+            },
+        },
+        "shear_fs": {
+            "fixed_base": {
+                2: shear_fs_fixed_base_2D,
+                3: shear_fs_fixed_base_3D,
+            },
+        },
+        "shear_fn": {
+            "fixed_base": {
+                3: shear_fn_fixed_base_3D,
+            },
+        },
+        "shear_sf": {
+            "fixed_base": {
+                2: shear_sf_fixed_base_2D,
+                3: shear_sf_fixed_base_3D,
+            },
+        },
+        "stretch_ss": {
+            "noslip": {
+                2: stretch_ss_noslip_2D,
+                3: stretch_ss_noslip_3D,
+            },
+            "fixed_base": {
+                2: stretch_ss_fixed_base_2D,
+                3: stretch_ss_fixed_base_3D,
+            },
+        },
+        "shear_sn": {
+            "fixed_base": {
+                3: shear_sn_fixed_base_3D,
+            },
+        },
+        "shear_nf": {
+            "fixed_base": {
+                3: shear_nf_fixed_base_3D,
+            },
+        },
+        "shear_ns": {
+            "fixed_base": {
+                3: shear_ns_fixed_base_3D,
+            },
+        },
+        "stretch_nn": {
+            "noslip": {
+                3: stretch_nn_noslip_3D,
+            },
+            "fixed_base": {
+                3: stretch_nn_fixed_base_3D,
+            },
+        },
+    }
 
     return fun_overview[deformation_type][fixed_sides][topological_dimensions]
-
 
 
 def get_mesh_dimensions(mesh):
@@ -125,22 +122,22 @@ def get_mesh_dimensions(mesh):
     xmin = min(xcoords)
     xmax = max(xcoords)
     ymin = min(ycoords)
-    ymax = min(ycoords)
+    ymax = max(ycoords)
 
     length = xmax - xmin
     width = ymax - ymin
-    
+
     if dim > 2:
         zcoords = coords[:, 2]
-        
+
         zmin = min(zcoords)
         zmax = max(zcoords)
         height = zmax - zmin
-        
+
         print(f"Domain length={length}, " + f"width={width}, " + f"height={height}")
         dimensions = [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
 
-    else:    
+    else:
         print(f"Domain length={length}, " + f"width={width}")
         dimensions = [[xmin, xmax], [ymin, ymax]]
 
@@ -170,12 +167,11 @@ def set_boundary_markers(mesh, dimensions):
     for bnd_pair in boundaries.items():
         bnd = bnd_pair[1]
         bnd["subdomain"].mark(boundary_markers, bnd["idt"])
-    
+
     # Redefine boundary measure
     ds = df.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
 
     return boundaries, ds
-
 
 
 class Wall(df.SubDomain):

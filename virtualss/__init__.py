@@ -1,4 +1,3 @@
-
 from virtualss.cardiac_mechanics import define_weak_form
 from virtualss.deformation_setup import define_boundary_conditions
-
+from virtualss.load import evaluate_normal_load

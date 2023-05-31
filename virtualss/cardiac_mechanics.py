@@ -5,19 +5,21 @@ strain energy functions and weak form terms.
 
 Åshild Telle / University of Washington, Simula Research Laboratory / 2023–2022
 
+TODO maybe make into a class to assess attributes?
+
 """
 
 import dolfin as df
 import ufl
 
+
 def psi_holzapfel(
     F,
     dim,
-    a = 0.074,
-    b = 4.878,
-    a_f = 2.628,
-    b_f = 5.214,
-
+    a=0.074,
+    b=4.878,
+    a_f=2.628,
+    b_f=5.214,
 ):
     """
 
@@ -38,7 +40,7 @@ def psi_holzapfel(
 
     J = ufl.det(F)
     J_iso = pow(J, -float(1) / dim)
-    C = J_iso**2 * F.T * F
+    C = J_iso ** 2 * F.T * F
 
     if dim == 2:
         e1 = ufl.as_vector([1.0, 0.0])
@@ -53,7 +55,7 @@ def psi_holzapfel(
     W_hat = a / (2 * b) * (ufl.exp(b * (IIFx - 3)) - 1)
     W_f = a_f / (2 * b_f) * (ufl.exp(b_f * cond(I4e1 - 1) ** 2) - 1)
 
-    return  W_hat + W_f
+    return W_hat + W_f
 
 
 def define_weak_form(mesh, material_parameters={}):
@@ -74,6 +76,9 @@ def define_weak_form(mesh, material_parameters={}):
 
     """
 
+    df.parameters["form_compiler"]["cpp_optimize"] = True
+    df.parameters["form_compiler"]["representation"] = "uflacs"
+    df.parameters["form_compiler"]["quadrature_degree"] = 4
 
     P2 = ufl.VectorElement("Lagrange", mesh.ufl_cell(), 2)
     P1 = ufl.FiniteElement("Lagrange", mesh.ufl_cell(), 1)
@@ -89,7 +94,7 @@ def define_weak_form(mesh, material_parameters={}):
 
     # Kinematics
     d = len(u)
-    I = ufl.Identity(d)                # Identity tensor
+    I = ufl.Identity(d)  # Identity tensor
     F = ufl.variable(I + ufl.grad(u))  # Deformation gradient
     J = ufl.det(F)
 
@@ -99,48 +104,13 @@ def define_weak_form(mesh, material_parameters={}):
     dx = ufl.Measure("dx", domain=mesh, metadata=metadata)
 
     dim = mesh.topology().dim()
-    material_parameters["dim"] = dim
 
-    weak_form = 0
-    weak_form += elasticity_term(F, J, p, v, dx, material_parameters)
-    weak_form += pressure_term(q, J, dx)
-
-    return weak_form, state, V
-
-
-def elasticity_term(F, J, p, v, dx, material_parameters):
-    """
-
-    First term of the weak form
-
-    Args:
-        F (ufl form): deformation tensor
-        J (ufl form): Jacobian
-        p (df.Function): pressure
-        v (df.TestFunction): test function for displacement
-
-    Returns:
-        component of weak form (ufl form)
-
-    """
-
-    psi = psi_holzapfel(F, **material_parameters)
+    psi = psi_holzapfel(F, dim=dim, **material_parameters)
     P = ufl.diff(psi, F) + p * J * ufl.inv(F.T)
 
-    return ufl.inner(P, ufl.grad(v)) * dx
+    elasticity_term = ufl.inner(P, ufl.grad(v)) * dx
+    pressure_term = q * (J - 1) * dx
 
+    weak_form = elasticity_term + pressure_term
 
-def pressure_term(q, J, dx):
-    """
-
-    Second term of the weak form
-
-    Args:
-        q (df.TestFunction): test function for pressure
-        J (ufl form): Jacobian
-
-    Returns:
-        component of weak form (ufl form)
-
-    """
-    return q * (J - 1) * dx
+    return weak_form, state, V, P, F
