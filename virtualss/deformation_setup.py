@@ -28,7 +28,16 @@ def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
     dimensions = get_mesh_dimensions(mesh)
     boundary_markers, ds = set_boundary_markers(mesh, dimensions)
 
-    L = dimensions[0][1] - dimensions[0][0]  # TODO make generic
+    if "ff" or "fs" or "fn" in deformation_type:
+        length = dimensions[0][1] - dimensions[0][0]
+        L = length
+    elif "sf" or "ss" or "sn" in deformation_type:
+        width = dimensions[1][1] - dimensions[1][0]
+        L = width
+    elif "nf" or "ns" or "nn" in deformation_type:
+        height = dimensions[2][1] - dimensions[2][0]
+        L = height
+
 
     bcs, bc_fun = define_bnd_fun(L, V, boundary_markers)
 
