@@ -33,7 +33,7 @@ def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
     bcs, bc_fun = define_bnd_fun(L, V, boundary_markers)
 
     return bcs, bc_fun, ds
-
+    
 
 def get_deformation_function_from_keywords(
     deformation_type, fixed_sides, topological_dimensions
@@ -46,9 +46,9 @@ def get_deformation_function_from_keywords(
 
     fun_overview = {
         "stretch_ff": {
-            "noslip": {
-                2: stretch_ff_noslip_2D,
-                3: stretch_ff_noslip_3D,
+            "componentwise": {
+                2: stretch_ff_componentwise_2D,
+                3: stretch_ff_componentwise_3D,
             },
             "fixed_base": {
                 2: stretch_ff_fixed_base_2D,
@@ -73,9 +73,9 @@ def get_deformation_function_from_keywords(
             },
         },
         "stretch_ss": {
-            "noslip": {
-                2: stretch_ss_noslip_2D,
-                3: stretch_ss_noslip_3D,
+            "componentwise": {
+                2: stretch_ss_componentwise_2D,
+                3: stretch_ss_componentwise_3D,
             },
             "fixed_base": {
                 2: stretch_ss_fixed_base_2D,
@@ -98,8 +98,8 @@ def get_deformation_function_from_keywords(
             },
         },
         "stretch_nn": {
-            "noslip": {
-                3: stretch_nn_noslip_3D,
+            "componentwise": {
+                3: stretch_nn_componentwise_3D,
             },
             "fixed_base": {
                 3: stretch_nn_fixed_base_3D,

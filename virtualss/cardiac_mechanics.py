@@ -58,59 +58,82 @@ def psi_holzapfel(
     return W_hat + W_f
 
 
-def define_weak_form(mesh, material_parameters={}):
-    """
+class CardiacModel:
+    def __init__(self, mesh, material_parameters={}):
+        """
 
-    Defines function spaces (P1 x P2) and functions to solve for, as well
-    as the weak form for the problem itself. This assumes a fully incompressible
-    formulation, solving for the displacement and the hydrostatic pressure.
+        Defines function spaces (P1 x P2) and functions to solve for, as well
+        as the weak form for the problem itself. This assumes a fully incompressible
+        formulation, solving for the displacement and the hydrostatic pressure.
 
-    Args:
-        mesh (df.Mesh): domain to solve equations over
-        material_parameters - dictionary; use parameters as keys
+        Args:
+            mesh (df.Mesh): domain to solve equations over
+            material_parameters - dictionary; use parameters as keys
 
-    Returns:
-        weak form (ufl form), state, displacement, boundary conditions
-        stretch_fun (ufl form): function that assigns Dirichlet bcs
-                on wall to be stretched/extended
+        Returns:
+            weak form (ufl form), state, displacement, boundary conditions
+            stretch_fun (ufl form): function that assigns Dirichlet bcs
+                    on wall to be stretched/extended
 
-    """
+        """
+        
+        self.mesh = mesh
+        self.material_parameters = material_parameters
 
-    df.parameters["form_compiler"]["cpp_optimize"] = True
-    df.parameters["form_compiler"]["representation"] = "uflacs"
-    df.parameters["form_compiler"]["quadrature_degree"] = 4
+        self.set_compiler_options()
+        self.define_state_spaces()
+        self.define_state_functions()
+        self.define_weak_form()
 
-    P2 = ufl.VectorElement("Lagrange", mesh.ufl_cell(), 2)
-    P1 = ufl.FiniteElement("Lagrange", mesh.ufl_cell(), 1)
+    def set_compiler_options(self):
+        df.parameters["form_compiler"]["cpp_optimize"] = True
+        df.parameters["form_compiler"]["representation"] = "uflacs"
+        df.parameters["form_compiler"]["quadrature_degree"] = 4
 
-    state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1]))
-    V = state_space.sub(0)
 
-    state = df.Function(state_space)
-    test_state = df.TestFunction(state_space)
+    def define_state_spaces(self):
+        mesh =self.mesh
 
-    u, p = df.split(state)
-    v, q = df.split(test_state)
+        P2 = ufl.VectorElement("Lagrange", mesh.ufl_cell(), 2)
+        P1 = ufl.FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 
-    # Kinematics
-    d = len(u)
-    I = ufl.Identity(d)  # Identity tensor
-    F = ufl.variable(I + ufl.grad(u))  # Deformation gradient
-    J = ufl.det(F)
+        state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1]))
+        V = state_space.sub(0)
 
-    # Weak form
+        self.state_space, self.V = state_space, V
 
-    metadata = {"quadrature_degree": 4}
-    dx = ufl.Measure("dx", domain=mesh, metadata=metadata)
+    def define_state_functions(self):
+        state_space = self.state_space
+        dim = self.mesh.topology().dim()
 
-    dim = mesh.topology().dim()
+        state = df.Function(state_space)
+        test_state = df.TestFunction(state_space)
 
-    psi = psi_holzapfel(F, dim=dim, **material_parameters)
-    P = ufl.diff(psi, F) + p * J * ufl.inv(F.T)
+        u, p = df.split(state)
+        v, q = df.split(test_state)
 
-    elasticity_term = ufl.inner(P, ufl.grad(v)) * dx
-    pressure_term = q * (J - 1) * dx
+        # Kinematics
+        d = len(u)
+        I = ufl.Identity(d)  # Identity tensor
+        F = ufl.variable(I + ufl.grad(u))  # Deformation gradient
+        J = ufl.det(F)
+        
+        psi = psi_holzapfel(F, dim=dim, **self.material_parameters)
+        P = ufl.diff(psi, F) + p * J * ufl.inv(F.T)
 
-    weak_form = elasticity_term + pressure_term
+        self.P, self.F, self.J, = P, F, J
+        self.u, self.p, self.v, self.q = u, p, v, q
+        self.state = state
 
-    return weak_form, state, V, P, F
+    def define_weak_form(self):
+        P, J, u, v, p, q = self.P, self.J, self.u, self.v, self.p, self.q
+
+        elasticity_term = ufl.inner(P, ufl.grad(v)) * df.dx
+        pressure_term = q * (J - 1) * df.dx
+
+        weak_form = elasticity_term + pressure_term
+
+        self.weak_form = weak_form
+
+    def solve(self, bcs):
+        df.solve(self.weak_form == 0, self.state, bcs=bcs)

@@ -15,7 +15,7 @@ def stretch_ff_fixed_base_2D(L, V, boundary_markers):
     return bcs, bcsfun
 
 
-def stretch_ff_noslip_2D(L, V, boundary_markers):
+def stretch_ff_componentwise_2D(L, V, boundary_markers):
     bcsfun = df.Expression("k*L", L=L, k=0, degree=2)
 
     xmin = boundary_markers["xmin"]["subdomain"]
@@ -72,7 +72,7 @@ def stretch_ss_fixed_base_2D(L, V, boundary_markers):
     return bcs, bcsfun
 
 
-def stretch_ss_noslip_2D(L, V, boundary_markers):
+def stretch_ss_componentwise_2D(L, V, boundary_markers):
     bcsfun = df.Expression("k*L", L=L, k=0, degree=2)
 
     xmin = boundary_markers["xmin"]["subdomain"]

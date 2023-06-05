@@ -13,7 +13,7 @@ import numpy as np
 import dolfin as df
 from mpi4py import MPI
 
-from virtualss import define_weak_form, define_boundary_conditions, evaluate_normal_load
+from virtualss import CardiacModel, define_boundary_conditions, evaluate_normal_load
 
 # define mesh and cardiac mechanics
 mesh1 = df.UnitCubeMesh(3, 3, 3)
@@ -27,7 +27,7 @@ for mesh in [mesh1, mesh2, mesh3, mesh4]:
 
     # deformation of choice
     deformation_mode = "stretch_ff"
-    fixed_sides = "noslip"
+    fixed_sides = "componentwise"
     bcs, bc_fun, ds = define_boundary_conditions(deformation_mode, fixed_sides, mesh, V)
     wall_idt = 2     # max_x
 
@@ -48,5 +48,5 @@ for mesh in [mesh1, mesh2, mesh3, mesh4]:
 
     plt.plot(normal_load)
 
-plt.legend(["Unit cube", "x2 in xdim", "x2 in ydim", "x2 in zdim"])
+plt.legend(["Unit cube", "x2 length in xdim", "x2 length in ydim", "x2 lengt in zdim"])
 plt.show()
