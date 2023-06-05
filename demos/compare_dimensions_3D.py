@@ -21,7 +21,9 @@ mesh2 = df.BoxMesh(df.Point(0, 0, 0), df.Point(2, 1, 1), 6, 3, 3)
 mesh3 = df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 2, 1), 3, 6, 3)
 mesh4 = df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 1, 2), 3, 3, 6)
 
-for mesh in [mesh1, mesh2, mesh3, mesh4]:
+markers = ["o", "D", "+"]
+
+for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
     cm = CardiacModel(mesh)
     V, P, F = cm.V, cm.P, cm.F
 
@@ -45,8 +47,13 @@ for mesh in [mesh1, mesh2, mesh3, mesh4]:
 
         load = evaluate_normal_load(F, P, mesh, ds, wall_idt)
         normal_load.append(load)
+    
+    plt.plot(100*stretch_values, normal_load, marker=marker)
 
-    plt.plot(normal_load)
+plt.xlabel("Stretch (%)")
+plt.ylabel("Load (kPa)")
 
 plt.legend(["Unit cube", "x2 length in xdim", "x2 length in ydim", "x2 lengt in zdim"])
+plt.tight_layout()
+#plt.savefig(f"3D_{fixed_sides}.png", dpi=300)
 plt.show()
