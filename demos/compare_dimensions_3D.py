@@ -16,14 +16,15 @@ from mpi4py import MPI
 from virtualss import CardiacModel, define_boundary_conditions, evaluate_normal_load
 
 # define mesh and cardiac mechanics
-mesh1 = df.UnitCubeMesh(3, 3, 3)
-mesh2 = df.BoxMesh(df.Point(0, 0, 0), df.Point(2, 1, 1), 6, 3, 3)
-mesh3 = df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 2, 1), 3, 6, 3)
-mesh4 = df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 1, 2), 3, 3, 6)
+N = 5
+mesh1 = df.UnitCubeMesh(N, N, N)
+mesh2 = df.BoxMesh(df.Point(0, 0, 0), df.Point(2, 1, 1), 2*N, N, N)
+mesh3 = df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 2, 1), N, 2*N, N)
+mesh4 = df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 1, 2), N, N, 2*N)
 
-markers = ["o", "D", "+"]
+markers = ["D", "o", "X", 6]
 
-for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
+for mesh, marker in zip([mesh1, mesh2, mesh3, mesh4], markers):
     cm = CardiacModel(mesh)
     V, P, F = cm.V, cm.P, cm.F
 
@@ -50,10 +51,12 @@ for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
     
     plt.plot(100*stretch_values, normal_load, marker=marker)
 
+    print("her??")
+
 plt.xlabel("Stretch (%)")
 plt.ylabel("Load (kPa)")
 
 plt.legend(["Unit cube", "x2 length in xdim", "x2 length in ydim", "x2 lengt in zdim"])
 plt.tight_layout()
-#plt.savefig(f"3D_{fixed_sides}.png", dpi=300)
+plt.savefig(f"3D_{fixed_sides}.png", dpi=300)
 plt.show()

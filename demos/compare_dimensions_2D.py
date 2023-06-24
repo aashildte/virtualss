@@ -16,11 +16,12 @@ from mpi4py import MPI
 from virtualss import CardiacModel, define_boundary_conditions, evaluate_normal_load
 
 # define mesh and cardiac mechanics
-mesh1 = df.UnitSquareMesh(3, 3)
-mesh2 = df.RectangleMesh(df.Point(0, 0), df.Point(2, 1), 6, 3)
-mesh3 = df.RectangleMesh(df.Point(0, 0), df.Point(1, 2), 3, 6)
+N = 10
+mesh1 = df.UnitSquareMesh(N, N)
+mesh2 = df.RectangleMesh(df.Point(0, 0), df.Point(2, 1), 2*N, N)
+mesh3 = df.RectangleMesh(df.Point(0, 0), df.Point(1, 2), N, N)
 
-markers = ["o", "D", "+"]
+markers = ["D", "o", "X"]
 
 for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
     cm = CardiacModel(mesh)
@@ -54,5 +55,5 @@ plt.ylabel("Load (kPa)")
 
 plt.legend(["Unit square", "x2 length in xdim", "x2 length in ydim"])
 plt.tight_layout()
-#plt.savefig(f"2D_{fixed_sides}.png", dpi=300)
+plt.savefig(f"2D_{fixed_sides}.png", dpi=300)
 plt.show()

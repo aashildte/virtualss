@@ -15,7 +15,8 @@ from mpi4py import MPI
 from virtualss import CardiacModel, define_boundary_conditions, evaluate_normal_load
 
 # define mesh and cardiac mechanics
-mesh = df.UnitCubeMesh(3, 3, 3)
+N = 5
+mesh = df.UnitCubeMesh(N, N, N)
 
 cm = CardiacModel(mesh)
 V, P, F, state = cm.V, cm.P, cm.F, cm.state
@@ -28,7 +29,7 @@ bcs, bc_fun, ds = define_boundary_conditions(deformation_mode, fixed_sides, mesh
 wall_idt = 2     # max_x
 
 # track displacement and save to file + save load values
-fout = df.XDMFFile(MPI.COMM_WORLD, "displacement.xdmf")
+fout = df.XDMFFile(MPI.COMM_WORLD, f"displacement3D{fixed_sides}.xdmf")
 
 normal_load = []
 
