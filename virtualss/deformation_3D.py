@@ -1,5 +1,6 @@
 import dolfin as df
 
+from virtualss.deformation_setup import get_corner_coords
 
 def stretch_ff_fixed_base_3D(L, V, boundary_markers):
     const = df.Constant([0, 0, 0])
@@ -29,6 +30,29 @@ def stretch_ff_componentwise_3D(L, V, boundary_markers):
         df.DirichletBC(V.sub(2), df.Constant(0.0), zmin),
         df.DirichletBC(V.sub(0), bcsfun, xmax),
     ]
+    return bcs, bcsfun
+    
+
+def stretch_ff_xcomp_3D(L, V, boundary_markers, mesh):
+
+    # find corner point, which we will fix completely
+
+    pt = get_corner_coords(mesh)
+    cb = lambda x, on_boundary: df.near(x[0], pt[0]) and df.near(x[1], pt[1]) and df.near(x[2], pt[2])
+
+    # and sides, which we will fix in one component
+    
+    xmin = boundary_markers["xmin"]["subdomain"]
+    xmax = boundary_markers["xmax"]["subdomain"]
+    
+    bcsfun = df.Expression("k*L", L=L, k=0, degree=1)
+
+    bcs = [
+        df.DirichletBC(V, df.Constant([0, 0, 0]), cb, "pointwise"),
+        df.DirichletBC(V.sub(0), df.Constant(0), xmin),
+        df.DirichletBC(V.sub(0), bcsfun, xmax),
+    ]
+
     return bcs, bcsfun
 
 

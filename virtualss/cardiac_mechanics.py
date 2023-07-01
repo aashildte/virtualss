@@ -52,14 +52,14 @@ def psi_holzapfel(
 
     cond = lambda a: ufl.conditional(a > 0, a, 0)
 
-    W_hat = a / (2 * b) * (ufl.exp(b * (IIFx - 3)) - 1)
+    W_hat = a / (2 * b) * (ufl.exp(b * (IIFx - dim)) - 1)
     W_f = a_f / (2 * b_f) * (ufl.exp(b_f * cond(I4e1 - 1) ** 2) - 1)
 
     return W_hat + W_f
 
 
 class CardiacModel:
-    def __init__(self, mesh, material_parameters={}):
+    def __init__(self, mesh, num_free_degrees, material_parameters={}):
         """
 
         Defines function spaces (P1 x P2) and functions to solve for, as well
@@ -79,6 +79,7 @@ class CardiacModel:
         
         self.mesh = mesh
         self.material_parameters = material_parameters
+        self.num_free_degrees = num_free_degrees
 
         self.set_compiler_options()
         self.define_state_spaces()
@@ -96,8 +97,14 @@ class CardiacModel:
 
         P2 = ufl.VectorElement("Lagrange", mesh.ufl_cell(), 2)
         P1 = ufl.FiniteElement("Lagrange", mesh.ufl_cell(), 1)
+        
+        if self.num_free_degrees > 0:
+            print(self.num_free_degrees)
+            R = ufl.VectorElement("Real", mesh.ufl_cell(), 0, self.num_free_degrees)
+            state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1, R]))
+        else:
+            state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1]))
 
-        state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1]))
         V = state_space.sub(0)
 
         self.state_space, self.V = state_space, V
@@ -109,8 +116,12 @@ class CardiacModel:
         state = df.Function(state_space)
         test_state = df.TestFunction(state_space)
 
-        u, p = df.split(state)
-        v, q = df.split(test_state)
+        if self.num_free_degrees > 0:    
+            u, p, r = df.split(state)
+            v, q, _ = df.split(test_state)
+        else:
+            u, p = df.split(state)
+            v, q = df.split(test_state)
 
         # Kinematics
         d = len(u)
@@ -123,7 +134,10 @@ class CardiacModel:
 
         self.P, self.F, self.J, = P, F, J
         self.u, self.p, self.v, self.q = u, p, v, q
-        self.state = state
+        self.state, self.test_state = state, test_state
+        
+        if self.num_free_degrees > 0: 
+            self.r = r
 
     def define_weak_form(self):
         P, J, u, v, p, q = self.P, self.J, self.u, self.v, self.p, self.q
@@ -135,5 +149,5 @@ class CardiacModel:
 
         self.weak_form = weak_form
 
-    def solve(self, bcs):
+    def solve(self, bcs=[]):
         df.solve(self.weak_form == 0, self.state, bcs=bcs)

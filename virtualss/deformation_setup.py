@@ -14,8 +14,6 @@ import dolfin as df
 from mpi4py import MPI
 import numpy as np
 
-from virtualss.deformation_3D import *
-from virtualss.deformation_2D import *
 
 
 def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
@@ -26,7 +24,7 @@ def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
     )
 
     dimensions = get_mesh_dimensions(mesh)
-    boundary_markers, ds = set_boundary_markers(mesh, dimensions)
+    boundary_markers, ds = get_boundary_markers(mesh) #, dimensions)
 
     if "ff" or "fs" or "fn" in deformation_type:
         length = dimensions[0][1] - dimensions[0][0]
@@ -38,11 +36,24 @@ def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
         height = dimensions[2][1] - dimensions[2][0]
         L = height
 
-
     bcs, bc_fun = define_bnd_fun(L, V, boundary_markers)
 
     return bcs, bc_fun, ds
+
+
+def define_external_load(deformation_type, state, test_state, F, mesh):
+
+    dimensions = get_mesh_dimensions(mesh)
+    boundary_markers, ds = set_boundary_markers(mesh, dimensions)
     
+    top_dim = mesh.topology().dim()
+
+    if top_dim == 2:
+        Gext, pressure_fun, rm = stretch_ff_load_2D(state, test_state, F, mesh, boundary_markers, ds)
+    else:
+        Gext, pressure_fun, rm = stretch_ff_load_3D(state, test_state, F, mesh, boundary_markers, ds)
+    
+    return Gext, pressure_fun, rm, ds
 
 def get_deformation_function_from_keywords(
     deformation_type, fixed_sides, topological_dimensions
@@ -153,7 +164,43 @@ def get_mesh_dimensions(mesh):
     return dimensions
 
 
-def set_boundary_markers(mesh, dimensions):
+def get_corner_coords(mesh):
+    
+    dim = mesh.topology().dim()
+
+    coords = mesh.coordinates()[:]
+
+    xcoords = coords[:, 0]
+    ycoords = coords[:, 1]
+
+    xmin = min(xcoords)
+    ymin = min(ycoords)
+
+    corner_coords = [xmin, ymin]
+    
+    if dim > 2:
+        zcoords = coords[:, 2]
+
+        zmin = min(zcoords)
+        corner_coords.append(zmin)
+
+    return corner_coords #df.Point(corner_coords)
+
+
+def get_length(mesh):
+    coords = mesh.coordinates()[:]
+
+    xcoords = coords[:, 0]
+
+    xmin = min(xcoords)
+    xmax = max(xcoords)
+
+    return xmax - xmin
+
+
+def get_boundary_markers(mesh):
+    dimensions = get_mesh_dimensions(mesh)
+    
     # define subdomains
     dim = mesh.topology().dim()
 

@@ -15,10 +15,10 @@ from mpi4py import MPI
 from virtualss import CardiacModel, define_boundary_conditions, evaluate_normal_load
 
 # define mesh and cardiac mechanics
-N = 5
+N = 4
 mesh = df.UnitCubeMesh(N, N, N)
 
-cm = CardiacModel(mesh)
+cm = CardiacModel(mesh, 0)
 V, P, F, state = cm.V, cm.P, cm.F, cm.state
 u, _ = state.split()
 
@@ -34,7 +34,7 @@ fout = df.XDMFFile(MPI.COMM_WORLD, f"displacement3D{fixed_sides}.xdmf")
 normal_load = []
 
 # iterate over these values:
-stretch_values = np.linspace(0, 0.2, 10)
+stretch_values = np.linspace(0, 0.2, 20)
 
 # solve problem
 for s in stretch_values:
@@ -49,5 +49,5 @@ for s in stretch_values:
 
 fout.close()
 
-plt.plot(normal_load)
+plt.plot(100*stretch_values, normal_load)
 plt.show()
