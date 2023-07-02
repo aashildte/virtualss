@@ -55,6 +55,39 @@ def stretch_ff_xcomp_2D(V, boundary_markers, mesh):
     return bcs, bcsfun
 
 
+def stretch_ff_load_2D(state, test_state, F, mesh, boundary_markers, ds):
+    
+    u, p, r = df.split(state)
+    v, q, s = df.split(test_state)
+
+    # external prerssure term
+    N = df.FacetNormal(mesh)
+
+    xmin_idt = boundary_markers["xmin"]["idt"]
+    xmax_idt = boundary_markers["xmax"]["idt"]
+
+    pressure_fun = df.Expression("-k/2", k=0, degree=2)
+    Gext1 = pressure_fun * df.inner(v, df.det(F) * df.inv(F) * N) * ds(xmax_idt)
+    Gext2 = pressure_fun * df.inner(v, df.det(F) * df.inv(F) * N) * ds(xmin_idt)
+
+    Gext = Gext1 + Gext2
+
+    # rigid motion term
+    
+    position = df.SpatialCoordinate(mesh)
+    RM = [
+        df.Constant((1, 0)),
+        df.Constant((0, 1)),
+        df.Expression(("-x[1]", "x[0]"), degree=1),
+    ]
+    
+    Pi = sum(df.dot(u, zi) * r[i] * df.dx for i, zi in enumerate(RM))
+
+    rm = df.derivative(Pi, state, test_state)
+
+    return Gext, pressure_fun, rm
+
+
 def shear_fs_fixed_base_2D(L, V, boundary_markers):
     const = df.Constant([0, 0])
     bcsfun = df.Expression((0, "k*L"), L=L, k=0, degree=2)
