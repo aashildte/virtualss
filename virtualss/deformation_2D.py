@@ -1,6 +1,6 @@
 import dolfin as df
 
-from virtualss.deformation_setup import get_corner_coords
+from virtualss.deformation_setup import get_corner_coords, get_length, get_width, get_height
 
 def stretch_ff_fixed_base_2D(L, V, boundary_markers):
     const = df.Constant([0, 0])
@@ -32,7 +32,7 @@ def stretch_ff_componentwise_2D(L, V, boundary_markers):
     return bcs, bcsfun
 
 
-def stretch_ff_xcomp_2D(L, V, boundary_markers, mesh):
+def stretch_ff_xcomp_2D(V, boundary_markers, mesh):
     # find corner point, which we will fix completely
 
     pt = get_corner_coords(mesh)
@@ -42,7 +42,8 @@ def stretch_ff_xcomp_2D(L, V, boundary_markers, mesh):
 
     xmin = boundary_markers["xmin"]["subdomain"]
     xmax = boundary_markers["xmax"]["subdomain"]
-    
+    L = get_length(mesh)
+
     bcsfun = df.Expression("k*L", L=L, k=0, degree=1)
 
     bcs = [
