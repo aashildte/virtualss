@@ -1,12 +1,8 @@
 """
 
-Åshild Telle / University of Washington, Simula Research Laboratory / 2023–2022
+Åshild Telle / University of Washington / 2023–2022
 
-Implementation of boundary conditions ++ for different passive deformation modes.
-
-TODO:
-    - Maybe deformations in the normal direction might make sense if we
-      consider a cross-section in this direction?
+Functions related to marking walls, getting relevant coordinates, etc. from the mesh.
 
 """
 
@@ -15,123 +11,9 @@ from mpi4py import MPI
 import numpy as np
 
 
-
-def define_boundary_conditions(deformation_type, fixed_sides, mesh, V):
-
-    top_dim = mesh.topology().dim()
-    define_bnd_fun = get_deformation_function_from_keywords(
-        deformation_type, fixed_sides, top_dim
-    )
-
-    dimensions = get_mesh_dimensions(mesh)
-    boundary_markers, ds = get_boundary_markers(mesh) #, dimensions)
-
-    if "ff" or "fs" or "fn" in deformation_type:
-        length = dimensions[0][1] - dimensions[0][0]
-        L = length
-    elif "sf" or "ss" or "sn" in deformation_type:
-        width = dimensions[1][1] - dimensions[1][0]
-        L = width
-    elif "nf" or "ns" or "nn" in deformation_type:
-        height = dimensions[2][1] - dimensions[2][0]
-        L = height
-
-    bcs, bc_fun = define_bnd_fun(L, V, boundary_markers)
-
-    return bcs, bc_fun, ds
-
-
-def define_external_load(deformation_type, state, test_state, F, mesh):
-
-    dimensions = get_mesh_dimensions(mesh)
-    boundary_markers, ds = set_boundary_markers(mesh, dimensions)
-    
-    top_dim = mesh.topology().dim()
-
-    if top_dim == 2:
-        Gext, pressure_fun, rm = stretch_ff_load_2D(state, test_state, F, mesh, boundary_markers, ds)
-    else:
-        Gext, pressure_fun, rm = stretch_ff_load_3D(state, test_state, F, mesh, boundary_markers, ds)
-    
-    return Gext, pressure_fun, rm, ds
-
-def get_deformation_function_from_keywords(
-    deformation_type, fixed_sides, topological_dimensions
-):
-    """
-
-    These functions are all defined in deformation_functions.
-
-    """
-
-    fun_overview = {
-        "stretch_ff": {
-            "componentwise": {
-                2: stretch_ff_componentwise_2D,
-                3: stretch_ff_componentwise_3D,
-            },
-            "fixed_base": {
-                2: stretch_ff_fixed_base_2D,
-                3: stretch_ff_fixed_base_3D,
-            },
-        },
-        "shear_fs": {
-            "fixed_base": {
-                2: shear_fs_fixed_base_2D,
-                3: shear_fs_fixed_base_3D,
-            },
-        },
-        "shear_fn": {
-            "fixed_base": {
-                3: shear_fn_fixed_base_3D,
-            },
-        },
-        "shear_sf": {
-            "fixed_base": {
-                2: shear_sf_fixed_base_2D,
-                3: shear_sf_fixed_base_3D,
-            },
-        },
-        "stretch_ss": {
-            "componentwise": {
-                2: stretch_ss_componentwise_2D,
-                3: stretch_ss_componentwise_3D,
-            },
-            "fixed_base": {
-                2: stretch_ss_fixed_base_2D,
-                3: stretch_ss_fixed_base_3D,
-            },
-        },
-        "shear_sn": {
-            "fixed_base": {
-                3: shear_sn_fixed_base_3D,
-            },
-        },
-        "shear_nf": {
-            "fixed_base": {
-                3: shear_nf_fixed_base_3D,
-            },
-        },
-        "shear_ns": {
-            "fixed_base": {
-                3: shear_ns_fixed_base_3D,
-            },
-        },
-        "stretch_nn": {
-            "componentwise": {
-                3: stretch_nn_componentwise_3D,
-            },
-            "fixed_base": {
-                3: stretch_nn_fixed_base_3D,
-            },
-        },
-    }
-
-    return fun_overview[deformation_type][fixed_sides][topological_dimensions]
-
-
 def get_mesh_dimensions(mesh):
-
+    mpi_comm = mesh.mpi_comm()
+    
     dim = mesh.topology().dim()
 
     coords = mesh.coordinates()[:]
@@ -139,10 +21,11 @@ def get_mesh_dimensions(mesh):
     xcoords = coords[:, 0]
     ycoords = coords[:, 1]
 
-    xmin = min(xcoords)
-    xmax = max(xcoords)
-    ymin = min(ycoords)
-    ymax = max(ycoords)
+    xmin = mpi_comm.allreduce(min(xcoords), op=MPI.MIN)
+    xmax = mpi_comm.allreduce(max(xcoords), op=MPI.MAX)
+    
+    ymin = mpi_comm.allreduce(min(ycoords), op=MPI.MIN)
+    ymax = mpi_comm.allreduce(max(ycoords), op=MPI.MAX)
 
     length = xmax - xmin
     width = ymax - ymin
@@ -150,8 +33,8 @@ def get_mesh_dimensions(mesh):
     if dim > 2:
         zcoords = coords[:, 2]
 
-        zmin = min(zcoords)
-        zmax = max(zcoords)
+        zmin = mpi_comm.allreduce(min(zcoords), op=MPI.MIN)
+        zmax = mpi_comm.allreduce(max(zcoords), op=MPI.MAX)
         height = zmax - zmin
 
         print(f"Domain length={length}, " + f"width={width}, " + f"height={height}")
@@ -165,6 +48,7 @@ def get_mesh_dimensions(mesh):
 
 
 def get_corner_coords(mesh):
+    mpi_comm = mesh.mpi_comm()
     
     dim = mesh.topology().dim()
 
@@ -173,29 +57,54 @@ def get_corner_coords(mesh):
     xcoords = coords[:, 0]
     ycoords = coords[:, 1]
 
-    xmin = min(xcoords)
-    ymin = min(ycoords)
+    xmin = mpi_comm.allreduce(min(xcoords), op=MPI.MIN)
+    ymin = mpi_comm.allreduce(min(ycoords), op=MPI.MIN)
 
     corner_coords = [xmin, ymin]
     
     if dim > 2:
         zcoords = coords[:, 2]
-
-        zmin = min(zcoords)
+    
+        zmin = mpi_comm.allreduce(min(zcoords), op=MPI.MIN)
         corner_coords.append(zmin)
 
-    return corner_coords #df.Point(corner_coords)
+    return corner_coords
 
 
 def get_length(mesh):
+    mpi_comm = mesh.mpi_comm()
     coords = mesh.coordinates()[:]
 
     xcoords = coords[:, 0]
 
-    xmin = min(xcoords)
-    xmax = max(xcoords)
+    xmin = mpi_comm.allreduce(min(xcoords), op=MPI.MIN)
+    xmax = mpi_comm.allreduce(max(xcoords), op=MPI.MAX)
 
     return xmax - xmin
+
+
+def get_width(mesh):
+    mpi_comm = mesh.mpi_comm()
+    coords = mesh.coordinates()[:]
+
+    ycoords = coords[:, 1]
+
+    ymin = mpi_comm.allreduce(min(ycoords), op=MPI.MIN)
+    ymax = mpi_comm.allreduce(max(ycoords), op=MPI.MAX)
+
+    return ymax - ymin
+
+
+def get_width(mesh):
+    mpi_comm = mesh.mpi_comm()
+    coords = mesh.coordinates()[:]
+
+    zcoords = coords[:, 2]
+
+    zmin = mpi_comm.allreduce(min(zcoords), op=MPI.MIN)
+    zmax = mpi_comm.allreduce(max(zcoords), op=MPI.MAX)
+
+    return zmax - zmin
 
 
 def get_boundary_markers(mesh):

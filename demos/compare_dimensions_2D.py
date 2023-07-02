@@ -13,7 +13,7 @@ import numpy as np
 import dolfin as df
 from mpi4py import MPI
 
-from virtualss import CardiacModel, define_boundary_conditions, evaluate_normal_load
+from virtualss import CardiacModel, get_boundary_markers, get_length, stretch_ff_componentwise_2D, evaluate_normal_load
 
 # define mesh and cardiac mechanics
 N = 10
@@ -30,7 +30,11 @@ for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
     # deformation of choice
     deformation_mode = "stretch_ff"
     fixed_sides = "componentwise"
-    bcs, bc_fun, ds = define_boundary_conditions(deformation_mode, fixed_sides, mesh, V)
+
+    boundary_markers, ds = get_boundary_markers(mesh)
+    length = get_length(mesh)
+    bcs, bcsfun = stretch_ff_componentwise_2D(length, V, boundary_markers)
+
     wall_idt = 2     # max_x
 
     normal_load = []
@@ -41,7 +45,7 @@ for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
     # solve problem
     for s in stretch_values:
         print(f"Domain stretch: {100*s:.0f} %")
-        bc_fun.k = s
+        bcsfun.k = s
 
         cm.solve(bcs)
 

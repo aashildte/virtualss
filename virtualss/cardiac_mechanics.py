@@ -59,7 +59,7 @@ def psi_holzapfel(
 
 
 class CardiacModel:
-    def __init__(self, mesh, num_free_degrees, material_parameters={}):
+    def __init__(self, mesh, num_free_degrees=0, material_parameters={}):
         """
 
         Defines function spaces (P1 x P2) and functions to solve for, as well
