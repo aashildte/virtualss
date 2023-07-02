@@ -95,7 +95,7 @@ def get_width(mesh):
     return ymax - ymin
 
 
-def get_width(mesh):
+def get_height(mesh):
     mpi_comm = mesh.mpi_comm()
     coords = mesh.coordinates()[:]
 

@@ -1,6 +1,6 @@
 from virtualss.cardiac_mechanics import CardiacModel
 from virtualss.deformation_setup import get_boundary_markers, get_length, get_corner_coords
-from virtualss.load import evaluate_normal_load, evaluate_stretch
+from virtualss.load import evaluate_normal_load, evaluate_shear_load, evaluate_load, evaluate_stretch
 from virtualss.deformation_3D import stretch_ff_fixed_base_3D, stretch_ff_componentwise_3D, stretch_ff_xcomp_3D, stretch_ff_load_3D
 
 from virtualss.deformation_2D import stretch_ff_fixed_base_2D, stretch_ff_componentwise_2D, stretch_ff_xcomp_2D, stretch_ff_load_2D
