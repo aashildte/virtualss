@@ -67,7 +67,7 @@ def stretch_ff_load_3D(state, test_state, F, mesh, boundary_markers, ds):
     xmin_idt = boundary_markers["xmin"]["idt"]
     xmax_idt = boundary_markers["xmax"]["idt"]
 
-    pressure_fun = df.Expression("-k/2", k=0, degree=2)
+    pressure_fun = df.Expression("-k", k=0, degree=2)
     Gext1 = pressure_fun * df.inner(v, df.det(F) * df.inv(F) * N) * ds(xmax_idt)
     Gext2 = pressure_fun * df.inner(v, df.det(F) * df.inv(F) * N) * ds(xmin_idt)
 

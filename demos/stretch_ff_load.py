@@ -11,7 +11,7 @@ import numpy as np
 import dolfin as df
 from mpi4py import MPI
 
-from virtualss import CardiacModel, get_boundary_markers, stretch_ff_load_2D, stretch_ff_load_3D, evaluate_stretch
+from virtualss import CardiacModel, get_boundary_markers, stretch_ff_load_2D, stretch_ff_load_3D, evaluate_stretch, evaluate_normal_load
 
 mesh_2D = df.UnitSquareMesh(3, 3)
 mesh_3D = df.UnitCubeMesh(3, 3, 3)
@@ -33,7 +33,7 @@ for mesh, num_free_degrees, stretch_fun in zip(
     cm.weak_form += Gext + rm
 
     # iterate over these values:
-    load_values = np.linspace(0, 5, 10)
+    load_values = np.linspace(0, 2.5, 20)
     stretch_values = []
 
     # solve problem
@@ -46,6 +46,11 @@ for mesh, num_free_degrees, stretch_fun in zip(
         stretch = evaluate_stretch(u, mesh, ds)
         stretch_values.append(100*stretch)
         print(stretch)
+        load_eval = evaluate_normal_load(
+            cm.F, cm.P, mesh, ds, 1
+        )
+        load_eval2 = evaluate_normal_load(cm.F, cm.P, mesh, ds, 2)
+        print(l, load_eval, load_eval2)
 
     plt.plot(stretch_values, load_values)
 plt.show()

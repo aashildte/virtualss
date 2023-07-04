@@ -1,11 +1,12 @@
 """
 
-Functions for defining cardiac mechanics equations including
-strain energy functions and weak form terms.
+Functions for defining cardiac mechanics equations including strain energy
+functions and weak form terms. The point of this class is to provide a simple
+continuum mechanics framework such that the examples in the demos can be run
+on their own. However, this can easily be replaced by your own more advanced
+FEniCS code.
 
-Åshild Telle / University of Washington, Simula Research Laboratory / 2023–2022
-
-TODO maybe make into a class to assess attributes?
+Åshild Telle / University of Washington / 2023–2022
 
 """
 
