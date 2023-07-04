@@ -10,6 +10,7 @@ The following deformation modes are supported:
 * stretch\_xx
 * stretch\_yy
 * stretvh\_zz
+  
 which can be applied using either
 * fixed surfaces on both ends ("minimum" side and "maximum" side in either dimension); here the area won't change so only the middle part will deform
 * fixed components on both ends; here only the x, y, or z component will be fixed such that the area shrinks with deformation and the rectangular or box-like shape is preserved overall
