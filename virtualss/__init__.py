@@ -25,6 +25,12 @@ from virtualss.stretch_xx import (
     stretch_xx_load,
 )
 
+from virtualss.shear_xy import (
+    shear_xy_fixed_sides,
+    shear_xy_xcomp,
+    shear_xy_load,
+)
+
 from virtualss.stretch_yy import (
     stretch_yy_fixed_sides,
     stretch_yy_ycomp,

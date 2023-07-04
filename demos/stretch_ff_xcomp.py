@@ -37,9 +37,6 @@ for mesh, stretch_fun in zip(
     u, _ = state.split()
     V = cm.state_space.sub(0)
 
-    # deformation of choice
-    deformation_mode = "stretch_ff"
-
     # boundary markers
     L = get_length(mesh)
     boundary_markers, ds = get_boundary_markers(mesh)

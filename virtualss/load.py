@@ -3,9 +3,12 @@ import dolfin as df
 from mpi4py import MPI
 
 
-def external_pressure_term(external_pressure_fun, F, v, mesh, ds):
-    facet_norm = df.FacetNormal(mesh)
-    return external_pressure_fun* df.inner(v, df.det(F) * df.inv(F) * facet_norm) * ds
+def external_pressure_term(external_pressure_fun, F, v, mesh, ds, dir_vector=None):
+
+    if dir_vector is None:      # assume facet normal
+        dir_vector = df.FacetNormal(mesh)
+
+    return external_pressure_fun* df.inner(v, df.det(F) * df.inv(F) * dir_vector) * ds
 
 
 def evaluate_normal_load(F, P, mesh, ds, wall_idt):

@@ -2,7 +2,8 @@
 
 This script generates four different meshes of different shapes, verifying
 that the stress-strain curve (tracked load vs. displacement) is shape independent
-using "noslip" boundary conditions.
+and dimension independent using the "xx_xcomp" stretch function. The same holds
+true for "yy_ycomp" and "zz_zcomp" (feel free to try!).
 
 Åshild Telle / University of Washington, Simula Research Laboratory / 2023–2022
 
@@ -13,17 +14,22 @@ import numpy as np
 import dolfin as df
 from mpi4py import MPI
 
-from virtualss import CardiacModel, get_boundary_markers, get_length, stretch_ff_componentwise_2D, evaluate_normal_load
+from virtualss import CardiacModel, get_boundary_markers, get_length, stretch_xx_xcomp, evaluate_normal_load
 
-# define mesh and cardiac mechanics
-N = 10
-mesh1 = df.UnitSquareMesh(N, N)
-mesh2 = df.RectangleMesh(df.Point(0, 0), df.Point(2, 1), 2*N, N)
-mesh3 = df.RectangleMesh(df.Point(0, 0), df.Point(1, 2), N, N)
+# define meshes in various dimensions and of varying size along different directions
+N = 3
 
-markers = ["D", "o", "X"]
+meshes = [
+    df.UnitSquareMesh(N, N),
+    df.RectangleMesh(df.Point(0, 0), df.Point(2, 1), 2*N, N),
+    df.RectangleMesh(df.Point(0, 0), df.Point(1, 2), N, N),
+    df.UnitCubeMesh(N, N, N),
+    df.BoxMesh(df.Point(0, 0, 0), df.Point(2, 1, 1), 2*N, N, N),
+    df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 2, 1), N, 2*N, N),
+    df.BoxMesh(df.Point(0, 0, 0), df.Point(1, 1, 2), N, N, 2*N),
+]
 
-for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
+for mesh in meshes:
     cm = CardiacModel(mesh)
     V, P, F, state = cm.V, cm.P, cm.F, cm.state
 
@@ -32,10 +38,9 @@ for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
     fixed_sides = "componentwise"
 
     boundary_markers, ds = get_boundary_markers(mesh)
-    length = get_length(mesh)
-    bcs, bcsfun = stretch_ff_componentwise_2D(length, V, boundary_markers)
+    bcs, bcsfun = stretch_xx_xcomp(V, boundary_markers)
 
-    wall_idt = 2     # max_x
+    wall_idt = boundary_markers["xmax"]["idt"]
 
     normal_load = []
 
@@ -52,12 +57,11 @@ for mesh, marker in zip([mesh1, mesh2, mesh3], markers):
         load = evaluate_normal_load(F, P, mesh, ds, wall_idt)
         normal_load.append(load)
 
-    plt.plot(100*stretch_values, normal_load, marker=marker)
+    plt.plot(100*stretch_values, normal_load)
 
 plt.xlabel("Stretch (%)")
 plt.ylabel("Load (kPa)")
 
-plt.legend(["Unit square", "x2 length in xdim", "x2 length in ydim"])
+plt.legend(["Unit square (2D)", "x2 length (2D)", "x2 width (2D)", "Unit cube (3D)", "x2 length (3D)", "x2 width (3D)", "x2 height (3D)"])
 plt.tight_layout()
-plt.savefig(f"2D_{fixed_sides}.png", dpi=300)
 plt.show()

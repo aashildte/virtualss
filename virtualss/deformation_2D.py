@@ -3,19 +3,6 @@ import dolfin as df
 from virtualss.deformation_setup import get_corner_coords, get_length, get_width, get_height
 
 
-def shear_fs_fixed_base_2D(L, V, boundary_markers):
-    const = df.Constant([0, 0])
-    bcsfun = df.Expression((0, "k*L"), L=L, k=0, degree=2)
-
-    xmin = boundary_markers["xmin"]["subdomain"]
-    xmax = boundary_markers["xmax"]["subdomain"]
-
-    bcs = [
-        df.DirichletBC(V, const, xmin),
-        df.DirichletBC(V, bcsfun, xmax),
-    ]
-    return bcs, bcsfun
-
 
 def shear_sf_fixed_base_2D(L, V, boundary_markers):
     const = df.Constant([0, 0])
