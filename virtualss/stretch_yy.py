@@ -19,18 +19,18 @@ def stretch_yy_fixed_sides(V, boundary_markers):
     """
 
     Defines boundary conditions equivalent to stretch with fixed areas
-    on both sides of the domain. The left side will be fixed to zero
-    completely while the right side will be assigned values via the
+    on both sides of the domain. The "ymax" side will be fixed to zero
+    completely while the "ymax" side will be assigned values via the
     returned bcsfun in the x component while keeping y = z = 0.
 
-    Params:
+    Args:
         V - Fucntion space for the displacement function.
         boundary_markers - dictionary with subspaces and wall identities
-            for all four sides of the presumably rectangular mersh.
+            for all four sides of the presumably cubical/rectangular mersh.
 
     Returns:
         bcs - list of DirichletBC instances
-        bcsfun - function defining the behavior of the right side only
+        bcsfun - function defining the behavior of the "ymax" side only
 
     """
 
@@ -83,15 +83,19 @@ def stretch_yy_ycomp(V, boundary_markers):
     """
 
     Defines boundary conditions equivalent to stretch with fixed x comp.
-    while allowing for free movement in the other directions. The left side
+    while allowing for free movement in the other directions. The "ymin" side
     will be kept at x = 0; the lower left corner will be fixed at x = y = z = 0,
-    and the right side will be assigned to a fixed value as determined by the
+    and the "ymax" side will be assigned to a fixed value as determined by the
     returned bcsfun function.
 
-    Params:
+    Args:
         V - Fucntion space for the displacement function.
         boundary_markers - dictionary with subspaces and wall identities
-            for all four sides of the presumably rectangular mersh.
+            for all four sides of the presumably cubical/rectangular mersh.
+    
+    Returns:
+        bcs - list of DirichletBC instances
+        bcsfun - function defining the behavior of the right side only
 
     """
 

@@ -132,6 +132,8 @@ def get_boundary_markers(mesh):
     for bnd_pair in boundaries.items():
         bnd = bnd_pair[1]
         bnd["subdomain"].mark(boundary_markers, bnd["idt"])
+    
+    df.File("test.pvd") << boundary_markers
 
     # Redefine boundary measure
     ds = df.Measure("ds", domain=mesh, subdomain_data=boundary_markers)
