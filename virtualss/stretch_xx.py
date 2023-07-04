@@ -13,17 +13,23 @@ from virtualss.deformation_setup import (
     get_length,
 )
 
+
 def stretch_xx_fixed_sides(V, boundary_markers):
     """
 
     Defines boundary conditions equivalent to stretch with fixed areas
-    on both sides of the domain by caling auxillary similar functions for
-    2D and 3D cases respectively.
+    on both sides of the domain. The left side will be fixed to zero
+    completely while the right side will be assigned values via the
+    returned bcsfun in the x component while keeping y = z = 0.
 
     Params:
         V - Fucntion space for the displacement function.
         boundary_markers - dictionary with subspaces and wall identities
             for all four sides of the presumably rectangular mersh.
+
+    Returns:
+        bcs - list of DirichletBC instances
+        bcsfun - function defining the behavior of the right side only
 
     """
 
@@ -71,22 +77,25 @@ def _stretch_xx_fixed_sides_3D(V, boundary_markers, mesh):
     ]
     return bcs, bcsfun
 
-def stretch_xx_xcomp(V, boundary_markers, mesh):
+
+def stretch_xx_xcomp(V, boundary_markers):
     """
 
-    Defines boundary conditions equivalent to stretch with fixed areas
-    on both sides of the domain by caling auxillary similar functions for
-    2D and 3D cases respectively.
+    Defines boundary conditions equivalent to stretch with fixed x comp.
+    while allowing for free movement in the other directions. The left side
+    will be kept at x = 0; the lower left corner will be fixed at x = y = z = 0,
+    and the right side will be assigned to a fixed value as determined by the
+    returned bcsfun function.
 
     Params:
         V - Fucntion space for the displacement function.
         boundary_markers - dictionary with subspaces and wall identities
             for all four sides of the presumably rectangular mersh.
-        mesh - the mesh itself  #TODO do we need this?
 
     """
 
-    top_dim = mesh.get_topological_dimension()
+    mesh = V.mesh()
+    top_dim = mesh.geometric_dimension()
 
     if top_dim == 2:
         return _stretch_xx_xcomp_2D(V, boundary_markers, mesh)
@@ -119,9 +128,7 @@ def _stretch_xx_xcomp_2D(V, boundary_markers, mesh):
     return bcs, bcsfun
 
 
-
 def _stretch_xx_xcomp_3D(V, boundary_markers, mesh):
-
     # find corner point, which we will fix completely
 
     pt = get_corner_coords(mesh)
@@ -148,8 +155,7 @@ def _stretch_xx_xcomp_3D(V, boundary_markers, mesh):
     return bcs, bcsfun
 
 
-
-def stretch_xx_load(F, v, boundary_markers, mesh, ds):
+def stretch_xx_load(F, v, mesh, boundary_markers, ds):
     facet_norm = df.FacetNormal(mesh)
 
     xmin_idt = boundary_markers["xmin"]["idt"]
@@ -157,8 +163,16 @@ def stretch_xx_load(F, v, boundary_markers, mesh, ds):
 
     # one function, applied symmetrically
 
-    pressure_fun = df.Expression("-k", k=0, degree=1)
-    ext_pressure_min = pressure_fun * df.inner(v, df.det(F) * df.inv(F) * facet_norm) * ds(xmax_idt)
-    ext_pressure_max = pressure_fun * df.inner(v, df.det(F) * df.inv(F) * facet_norm) * ds(xmin_idt)
+    ext_pressure_fun = df.Expression("-k", k=0, degree=1)
+    ext_pressure_min = (
+        ext_pressure_fun
+        * df.inner(v, df.det(F) * df.inv(F) * facet_norm)
+        * ds(xmax_idt)
+    )
+    ext_pressure_max = (
+        ext_pressure_fun
+        * df.inner(v, df.det(F) * df.inv(F) * facet_norm)
+        * ds(xmin_idt)
+    )
 
-    return [ext_pressure_min, ext_pressure_max], pressure_fun
+    return [ext_pressure_min, ext_pressure_max], ext_pressure_fun

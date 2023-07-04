@@ -60,7 +60,7 @@ def psi_holzapfel(
 
 
 class CardiacModel:
-    def __init__(self, mesh, num_free_degrees=0, material_parameters={}):
+    def __init__(self, mesh, remove_rm=False, material_parameters={}):
         """
 
         Defines function spaces (P1 x P2) and functions to solve for, as well
@@ -69,6 +69,8 @@ class CardiacModel:
 
         Args:
             mesh (df.Mesh): domain to solve equations over
+            remove_rm (boolean): If set to be true, a weak form term is added
+                for removing rigid motion using Lagrangian multipliers
             material_parameters - dictionary; use parameters as keys
 
         Returns:
@@ -80,7 +82,8 @@ class CardiacModel:
         
         self.mesh = mesh
         self.material_parameters = material_parameters
-        self.num_free_degrees = num_free_degrees
+        self.remove_rm = remove_rm
+        self.dim = 2 if mesh.geometric_dimension() == 2 else 3
 
         self.set_compiler_options()
         self.define_state_spaces()
@@ -99,9 +102,9 @@ class CardiacModel:
         P2 = ufl.VectorElement("Lagrange", mesh.ufl_cell(), 2)
         P1 = ufl.FiniteElement("Lagrange", mesh.ufl_cell(), 1)
         
-        if self.num_free_degrees > 0:
-            print(self.num_free_degrees)
-            R = ufl.VectorElement("Real", mesh.ufl_cell(), 0, self.num_free_degrees)
+        if self.remove_rm:
+            num_dofs = 3 if self.dim == 2 else 6
+            R = ufl.VectorElement("Real", mesh.ufl_cell(), 0, num_dofs)
             state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1, R]))
         else:
             state_space = df.FunctionSpace(mesh, df.MixedElement([P2, P1]))
@@ -117,7 +120,7 @@ class CardiacModel:
         state = df.Function(state_space)
         test_state = df.TestFunction(state_space)
 
-        if self.num_free_degrees > 0:    
+        if self.remove_rm:
             u, p, r = df.split(state)
             v, q, _ = df.split(test_state)
         else:
@@ -137,8 +140,37 @@ class CardiacModel:
         self.u, self.p, self.v, self.q = u, p, v, q
         self.state, self.test_state = state, test_state
         
-        if self.num_free_degrees > 0: 
+        if self.remove_rm:
             self.r = r
+        
+
+    def _remove_rigid_motion_term(self):
+        state, test_state = self.state, self.test_state
+        u, r = self.u, self.r
+        mesh = self.mesh
+
+        position = df.SpatialCoordinate(mesh)
+
+        if self.dim == 3:
+            RM = [
+                df.Constant((1, 0, 0)),
+                df.Constant((0, 1, 0)),
+                df.Constant((0, 0, 1)),
+                df.cross(position, df.Constant((1, 0, 0))),
+                df.cross(position, df.Constant((0, 1, 0))),
+                df.cross(position, df.Constant((0, 0, 1))),
+            ]
+        else:
+            RM = [
+                df.Constant((1, 0)),
+                df.Constant((0, 1)),
+                df.Expression(("-x[1]", "x[0]"), degree=1),
+            ]
+
+        Pi = sum(df.dot(u, zi) * r[i] * df.dx for i, zi in enumerate(RM))
+
+        return df.derivative(Pi, state, test_state)
+
 
     def define_weak_form(self):
         P, J, u, v, p, q = self.P, self.J, self.u, self.v, self.p, self.q
@@ -148,7 +180,11 @@ class CardiacModel:
 
         weak_form = elasticity_term + pressure_term
 
+        if self.remove_rm:
+            weak_form += self._remove_rigid_motion_term()
+
         self.weak_form = weak_form
+
 
     def solve(self, bcs=[]):
         df.solve(self.weak_form == 0, self.state, bcs=bcs)
