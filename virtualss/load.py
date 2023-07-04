@@ -2,11 +2,18 @@
 import dolfin as df
 from mpi4py import MPI
 
+from virtualss import get_length, get_width, get_height
+
+
+def external_pressure_term(external_pressure_fun, F, v, mesh, ds):
+    facet_norm = df.FacetNormal(mesh)
+    return external_pressure_fun* df.inner(v, df.det(F) * df.inv(F) * facet_norm) * ds
+
 
 def evaluate_normal_load(F, P, mesh, ds, wall_idt):
     normal_vector = df.FacetNormal(mesh)
-
     return evaluate_load(F, P, mesh, ds, wall_idt, normal_vector)
+
 
 def evaluate_shear_load(F, P, mesh, ds, wall_idt):
     
@@ -56,24 +63,24 @@ def evaluate_load(F, P, mesh, ds, wall_idt, unit_vector):
     return total_load/area
 
 
-def _evaluate_ds(F, f, mesh, ds, wall_idt):
-    normal_vector = df.FacetNormal(mesh)
-
-    area = df.assemble(         # = total length in 2D
-        df.det(F)
-        * df.inner(df.inv(F).T * normal_vector, normal_vector)
-        * ds(wall_idt)
-    )
-    return df.assemble(f*ds(wall_idt)) / area
-
-
-
-
-def evaluate_stretch(u, mesh, ds):
+def evaluate_deformation_xdir(u, mesh, boundary_markers, ds):
     """
 
-    Taken as average displacement at the "xmax" wall minus the "xmin" wall,
-    divided by original domain length.
+    Evaluates relative shortening in the x direction, as taken as the average
+    displacement at the "xmax" wall minus the displacement at the "xmin" wall,
+    divided by the original domain length.
+
+    Multiply result by 100 to get the shortening/widening in %.
+
+    Args:
+        u - displacement
+        mesh - domain
+        boundary_markers - dictionary defining subdomains and wall identities,
+            as defined for a cubical domain
+        ds - corresponding meshfunction
+
+    Returns:
+        float: relative shortening/widening
 
     """
     
@@ -85,23 +92,58 @@ def evaluate_stretch(u, mesh, ds):
     else:
         raise NotImplementedError()
 
-    d = len(u)
-    I = df.Identity(d)
-    F = df.variable(I + df.grad(u))
-
     xcomp = df.inner(u, dir_vector)
-    disp_min = df.assemble(xcomp*ds(1))     # TODO generalize
-    disp_max = df.assemble(xcomp*ds(2))
 
-    mpi_comm = mesh.mpi_comm()
-    coords = mesh.coordinates()[:]
+    xmin_idt = boundary_markers["xmin"]["idt"]
+    xmax_idt = boundary_markers["xmax"]["idt"]
 
-    xcoords = coords[:, 0]
-    xmin = mpi_comm.allreduce(min(xcoords), op=MPI.MIN)
-    xmax = mpi_comm.allreduce(max(xcoords), op=MPI.MAX)
-    length = xmax - xmin
+    disp_min = df.assemble(xcomp*ds(xmin_idt))
+    disp_max = df.assemble(xcomp*ds(xmax_idt))
 
-    relative_shortening = (disp_max - disp_min)/length
+    length = get_length(mesh)
+    relative_deformation_change = (disp_max - disp_min)/length
 
-    return relative_shortening
+    return relative_deformation_change
 
+
+def evaluate_deformation_ydir(u, mesh, boundary_markers, ds):
+    """
+
+    Evaluates relative shortening in the y direction, as taken as the average
+    displacement at the "ymax" wall minus the displacement at the "ymin" wall,
+    divided by the original domain width.
+
+    Multiply result by 100 to get the shortening/widening in %.
+
+    Args:
+        u - displacement
+        mesh - domain
+        boundary_markers - dictionary defining subdomains and wall identities,
+            as defined for a cubical domain
+        ds - corresponding meshfunction
+
+    Returns:
+        float: relative shortening/widening
+
+    """
+ 
+    top_dim = mesh.topology().dim()
+    if top_dim == 2:
+        dir_vector = df.as_vector([0., 1.])
+    elif top_dim == 3:
+        dir_vector = df.as_vector([0., 1., 0.])
+    else:
+        raise NotImplementedError()
+
+    ycomp = df.inner(u, dir_vector)
+
+    ymin_idt = boundary_markers["ymin"]["idt"]
+    ymax_idt = boundary_markers["ymax"]["idt"]
+
+    disp_min = df.assemble(ycomp*ds(ymin_idt))
+    disp_max = df.assemble(ycomp*ds(ymax_idt))
+
+    width = get_width(mesh)
+    relative_deformation_change = (disp_max - disp_min)/width
+
+    return relative_deformation_change
