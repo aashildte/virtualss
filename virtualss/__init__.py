@@ -21,24 +21,48 @@ from virtualss.deformation import (
 
 from virtualss.stretch_xx import (
     stretch_xx_fixed_sides,
-    stretch_xx_xcomp,
+    stretch_xx_comp,
     stretch_xx_load,
 )
 
 from virtualss.shear_xy import (
     shear_xy_fixed_sides,
-    shear_xy_xcomp,
-    shear_xy_load,
+    shear_xy_comp,
+)
+
+from virtualss.shear_xz import (
+    shear_xz_fixed_sides,
+    shear_xz_comp,
+)
+
+from virtualss.shear_yx import (
+    shear_yx_fixed_sides,
+    shear_yx_comp,
 )
 
 from virtualss.stretch_yy import (
     stretch_yy_fixed_sides,
-    stretch_yy_ycomp,
+    stretch_yy_comp,
     stretch_yy_load,
+)
+
+from virtualss.shear_yz import (
+    shear_yz_fixed_sides,
+    shear_yz_comp,
+)
+
+from virtualss.shear_zx import (
+    shear_zx_fixed_sides,
+    shear_zx_comp,
+)
+
+from virtualss.shear_zy import (
+    shear_zy_fixed_sides,
+    shear_zy_comp,
 )
 
 from virtualss.stretch_zz import (
     stretch_zz_fixed_sides,
-    stretch_zz_zcomp,
+    stretch_zz_comp,
     stretch_zz_load,
 )

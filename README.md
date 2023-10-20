@@ -1,8 +1,10 @@
-# Virtual Stretch-Strain experiments
+# Virtual Stress-Strain experiments
 
-Fenics-based code for performing stretch and strain on "tissue slabs". The code should work in 2D and 3D on any rectangular or boxlike mesh.
+Fenics-based code for performing stretch experiments on "tissue slabs", performing stress-strain curves. The code should work in 2D and 3D on any rectangular or boxlike mesh.
 
 We assume that the rectangle/box is aligned with the cartesian coordinate system, such that e.g. "x" direction will correspond to the direction given by the vector (1, 0) or (1, 0, 0). A deformation of the kind "xx" will happen along this axis.
+
+*The code is experimental and might not produce even remotely correct results.*
 
 # Tensile/compressive deformation
 
