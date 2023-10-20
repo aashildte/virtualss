@@ -37,9 +37,8 @@ from virtualss import (
     evaluate_shear_load,
 )
 from virtualss import shear_xy_comp as shear_fn
-
-wall_normal = "xmax"
-wall_shear = "ymax"
+wall = "xmax"
+direction = "ydir"
 
 # define mesh and initiate instance of class from which we get the weak form
 N = 5
@@ -55,8 +54,7 @@ u, _ = state.split()
 # define boundary conditions for our deformation of choice
 boundary_markers, ds = get_boundary_markers(mesh)
 bcs, bc_fun = shear_fn(V, boundary_markers)
-wall_idt_normal = boundary_markers[wall_normal]["idt"]
-wall_idt_shear = boundary_markers[wall_shear]["idt"]
+wall_idt = boundary_markers[wall]["idt"]
 
 # track displacement and save to file + save load values
 fout = df.XDMFFile(MPI.COMM_WORLD, "displacement_shear_fixed_component.xdmf")
@@ -75,8 +73,8 @@ for stretch in stretch_values:
 
     cm.solve(bcs)
 
-    load_n = evaluate_normal_load(F, P, mesh, ds, wall_idt_normal)
-    load_s = evaluate_shear_load(F, P, mesh, ds, wall_idt_shear)
+    load_n = evaluate_normal_load(F, P, mesh, ds, wall_idt)
+    load_s = evaluate_shear_load(F, P, mesh, ds, wall_idt, direction)
     normal_load.append(load_n)
     shear_load.append(load_s)
     fout.write_checkpoint(u, "Displacement (µm)", stretch, append=True)

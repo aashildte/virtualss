@@ -16,36 +16,24 @@ def evaluate_normal_load(F, P, mesh, ds, wall_idt):
     return evaluate_load(F, P, mesh, ds, wall_idt, normal_vector)
 
 
-def evaluate_shear_load(F, P, mesh, ds, wall_idt):
-    
+def evaluate_shear_load(F, P, mesh, ds, wall_idt, direction):    
     top_dim = mesh.topology().dim()
 
     unit_vectors = {
-            1: {
-                2 : df.as_vector([-1.0, 0.0]),
-                3 : df.as_vector([-1.0, 0.0, 0.0]),
-                },
-            2: {
+            "xdir": {
                 2 : df.as_vector([1.0, 0.0]),
                 3 : df.as_vector([1.0, 0.0, 0.0]),
                 },
-            3: {
-                2 : df.as_vector([0.0, -1.0]),
-                3 : df.as_vector([0.0, -1.0, 0.0]),
-                },
-            4: {
+            "ydir": {
                 2 : df.as_vector([0.0, 1.0]),
                 3 : df.as_vector([0.0, 1.0, 0.0]),
                 },
-            5: {
-                3 : df.as_vector([0.0, 0.0, -1.0]),
-                },
-            6: {
+            "zdir": {
                 3 : df.as_vector([0.0, 0.0, 1.0]),
-                }
+                },
             }
 
-    unit_vector = unit_vectors[wall_idt][top_dim]
+    unit_vector = unit_vectors[direction][top_dim]
 
     return evaluate_load(F, P, mesh, ds, wall_idt, unit_vector)
 
