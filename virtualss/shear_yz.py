@@ -35,8 +35,8 @@ def shear_yz_fixed_sides(V, boundary_markers):
 def _shear_yz_fixed_sides_3D(V, boundary_markers, mesh):
     const = df.Constant([0, 0, 0])
 
-    length = get_length(mesh)
-    bcsfun = df.Expression((0, 0, "k*L"), L=length, k=0, degree=1)
+    width = get_width(mesh)
+    bcsfun = df.Expression((0, 0, "k*W"), W=width, k=0, degree=1)
 
     ymin = boundary_markers["ymin"]["subdomain"]
     ymax = boundary_markers["ymax"]["subdomain"]
@@ -94,12 +94,12 @@ def _shear_yz_comp_3D(V, boundary_markers, mesh):
     ymin = boundary_markers["ymin"]["subdomain"]
     ymax = boundary_markers["ymax"]["subdomain"]
 
-    length = get_length(mesh)
-    bcsfun = df.Expression("k*L", L=length, k=0, degree=1)
+    width = get_width(mesh)
+    bcsfun = df.Expression("k*W", W=width, k=0, degree=1)
 
     bcs = [
         df.DirichletBC(V, df.Constant([0, 0, 0]), cb, "pointwise"),
-        df.DirichletBC(V.sub(0), df.Constant(0), ymin),
+        df.DirichletBC(V.sub(2), df.Constant(0), ymin),
         df.DirichletBC(V.sub(2), bcsfun, ymax),
     ]
 

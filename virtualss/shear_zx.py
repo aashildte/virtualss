@@ -35,8 +35,8 @@ def shear_zx_fixed_sides(V, boundary_markers):
 def _shear_zx_fixed_sides_3D(V, boundary_markers, mesh):
     const = df.Constant([0, 0, 0])
 
-    length = get_length(mesh)
-    bcsfun = df.Expression(("k*L", 0, 0), L=length, k=0, degree=1)
+    height = get_height(mesh)
+    bcsfun = df.Expression(("k*H", 0, 0), H=height, k=0, degree=1)
 
     zmin = boundary_markers["zmin"]["subdomain"]
     zmax = boundary_markers["zmax"]["subdomain"]
@@ -94,8 +94,8 @@ def _shear_zx_comp_3D(V, boundary_markers, mesh):
     zmin = boundary_markers["zmin"]["subdomain"]
     zmax = boundary_markers["zmax"]["subdomain"]
 
-    length = get_length(mesh)
-    bcsfun = df.Expression("k*L", L=length, k=0, degree=1)
+    height = get_height(mesh)
+    bcsfun = df.Expression("k*H", L=height, k=0, degree=1)
 
     bcs = [
         df.DirichletBC(V, df.Constant([0, 0, 0]), cb, "pointwise"),
@@ -104,21 +104,3 @@ def _shear_zx_comp_3D(V, boundary_markers, mesh):
     ]
 
     return bcs, bcsfun
-
-
-def shear_zx_load(F, v, mesh, boundary_markers, ds):
-
-    zmin_idt = boundary_markers["zmin"]["idt"]
-    zmax_idt = boundary_markers["zmax"]["idt"]
-
-    # one function, applied symmetrically
-
-    ext_pressure_fun = df.Expression("-k", k=0, degree=1)
-    ext_pressure_min = external_pressure_term(
-        ext_pressure_fun, F, v, mesh, ds(zmin_idt)
-    )
-    ext_pressure_max = external_pressure_term(
-        ext_pressure_fun, F, v, mesh, ds(zmax_idt)
-    )
-
-    return [ext_pressure_min, ext_pressure_max], ext_pressure_fun
