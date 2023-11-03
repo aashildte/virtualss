@@ -9,9 +9,9 @@ other side is assigned an incremental x component while we assign y = z = 0).
 Suggested ways to modify this script:
 
 - You might replace
-      share_xy_comp          and         "xmax"
+      share_xy_comp          and         "xmax"       and       "ydir"
   with 
-      shear_yx_comp          and         "ymax"
+      shear_yx_comp          and         "ymax"       and       "xdir"
 
 - You might make this 3D simply by changing the geometry:
       df.UnitSquareMesh(N, N)
@@ -36,12 +36,12 @@ from virtualss import (
     evaluate_normal_load,
     evaluate_shear_load,
 )
-from virtualss import shear_xy_comp as shear_fn
+from virtualss import shear_xy_xcomp as shear_fn
 wall = "xmax"
 direction = "ydir"
 
 # define mesh and initiate instance of class from which we get the weak form
-N = 5
+N = 3
 #mesh = df.UnitCubeMesh(N, N, N)
 mesh = df.UnitSquareMesh(N, N)
 
@@ -78,7 +78,7 @@ for stretch in stretch_values:
     normal_load.append(load_n)
     shear_load.append(load_s)
     fout.write_checkpoint(u, "Displacement (µm)", stretch, append=True)
-
+    
 fout.close()
 
 # finally plot the resulting stretch/stress curve

@@ -43,6 +43,7 @@ def evaluate_load(F, P, mesh, ds, wall_idt, unit_vector):
 
     load = df.inner(P * normal_vector, unit_vector)
     total_load = df.assemble(load * ds(wall_idt))
+
     area = df.assemble(         # = total length in 2D
         df.det(F)
         * df.inner(df.inv(F).T * unit_vector, unit_vector)

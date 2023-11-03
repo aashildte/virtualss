@@ -36,8 +36,8 @@ def shear_yx_fixed_sides(V, boundary_markers):
 def _shear_yx_fixed_sides_2D(V, boundary_markers, mesh):
     const = df.Constant([0, 0])
     
-    length = get_length(mesh)
-    bcsfun = df.Expression(("k*L", 0), L=length, k=0, degree=1)
+    width = get_width(mesh)
+    bcsfun = df.Expression(("k*W", 0), W=width, k=0, degree=1)
 
     ymin = boundary_markers["ymin"]["subdomain"]
     ymax = boundary_markers["ymax"]["subdomain"]
@@ -52,14 +52,29 @@ def _shear_yx_fixed_sides_2D(V, boundary_markers, mesh):
 def _shear_yx_fixed_sides_3D(V, boundary_markers, mesh):
     const = df.Constant([0, 0, 0])
 
-    length = get_length(mesh)
-    bcsfun = df.Expression(("k*L", 0, 0), L=length, k=0, degree=1)
+    width = get_width(mesh)
+    bcsfun = df.Expression(("k*W", 0, 0), W=width, k=0, degree=1)
 
     ymin = boundary_markers["ymin"]["subdomain"]
     ymax = boundary_markers["ymax"]["subdomain"]
 
     bcs = [
         df.DirichletBC(V, const, ymin),
+        df.DirichletBC(V, bcsfun, ymax),
+    ]
+    return bcs, bcsfun
+
+def XX_shear_yx_fixed_sides_3D(V, boundary_markers, mesh):
+    const = df.Constant([0, 0, 0])
+
+    width = get_width(mesh)
+    bcsfun = df.Expression(("k*W", 0, 0), W=width, k=0, degree=2)
+
+    ymin = boundary_markers["ymin"]["subdomain"]
+    ymax = boundary_markers["ymax"]["subdomain"]
+
+    bcs = [
+        df.DirichletBC(V, bcsfun, ymin),
         df.DirichletBC(V, bcsfun, ymax),
     ]
     return bcs, bcsfun
@@ -106,9 +121,9 @@ def _shear_yx_comp_2D(V, boundary_markers, mesh):
 
     ymin = boundary_markers["ymin"]["subdomain"]
     ymax = boundary_markers["ymax"]["subdomain"]
-    length = get_length(mesh)
-
-    bcsfun = df.Expression("k*L", L=length, k=0, degree=1)
+    
+    width = get_width(mesh)
+    bcsfun = df.Expression("k*W", W=width, k=0, degree=1)
 
     bcs = [
         df.DirichletBC(V, df.Constant([0, 0]), cb, "pointwise"),
@@ -134,8 +149,8 @@ def _shear_yx_comp_3D(V, boundary_markers, mesh):
     ymin = boundary_markers["ymin"]["subdomain"]
     ymax = boundary_markers["ymax"]["subdomain"]
 
-    length = get_length(mesh)
-    bcsfun = df.Expression("k*L", L=length, k=0, degree=1)
+    length = get_width(mesh)
+    bcsfun = df.Expression("k*W", W=width, k=0, degree=1)
 
     bcs = [
         df.DirichletBC(V, df.Constant([0, 0, 0]), cb, "pointwise"),
