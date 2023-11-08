@@ -15,7 +15,7 @@ from virtualss import (
     CardiacModel,
     get_boundary_markers,
     stretch_xx_fixed_sides,
-    stretch_xx_xcomp,
+    stretch_xx_comp,
     stretch_xx_load,
     evaluate_normal_load,
     evaluate_deformation_xdir,
@@ -60,7 +60,7 @@ def test_stretch_xx_xcomp(dim):
     cm = CardiacModel(mesh)
 
     boundary_markers, ds = get_boundary_markers(mesh)
-    bcs, bcsfun = stretch_xx_xcomp(cm.V, boundary_markers)
+    bcs, bcsfun = stretch_xx_comp(cm.V, boundary_markers)
 
     assigned_stretch = 0.01
     bcsfun.k = assigned_stretch
