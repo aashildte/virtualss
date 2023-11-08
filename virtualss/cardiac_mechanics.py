@@ -38,17 +38,18 @@ def psi_holzapfel(
         psi(F), scalar function
 
     """
-
+    
     J = ufl.det(F)
     J_iso = pow(J, -float(1) / dim)
-    C = J_iso ** 2 * F.T * F
+    C = F.T * F
+    C_iso = J_iso ** 2 * C
 
     if dim == 2:
         e1 = ufl.as_vector([1.0, 0.0])
     else:
         e1 = ufl.as_vector([1.0, 0.0, 0.0])
 
-    IIFx = ufl.tr(C)
+    IIFx = ufl.tr(C_iso)
     I4e1 = ufl.inner(C * e1, e1)
 
     cond = lambda a: ufl.conditional(a > 0, a, 0)
