@@ -36,20 +36,21 @@ from virtualss import (
     evaluate_normal_load,
     evaluate_shear_load,
 )
-from virtualss import shear_xy_xcomp as shear_fn
+from virtualss import simple_shear_xy as shear_fn
 wall = "xmax"
 direction = "ydir"
 
 # define mesh and initiate instance of class from which we get the weak form
-N = 3
+N = 5
 #mesh = df.UnitCubeMesh(N, N, N)
 mesh = df.UnitSquareMesh(N, N)
 
 cm = CardiacModel(mesh, 0)
 
 # extract variables needed for boundary conditions + for evaluation/tracking
-V, P, F, state = cm.V, cm.P, cm.F, cm.state
+V, P, F, state, PK1 = cm.V, cm.P, cm.F, cm.state, cm.P
 u, _ = state.split()
+T = df.TensorFunctionSpace(mesh, "CG", 2)
 
 # define boundary conditions for our deformation of choice
 boundary_markers, ds = get_boundary_markers(mesh)
@@ -57,7 +58,8 @@ bcs, bc_fun = shear_fn(V, boundary_markers)
 wall_idt = boundary_markers[wall]["idt"]
 
 # track displacement and save to file + save load values
-fout = df.XDMFFile(MPI.COMM_WORLD, "displacement_shear_fixed_component.xdmf")
+fout_disp = df.XDMFFile(MPI.COMM_WORLD, "displacement_shear_2D_alternative.xdmf")
+fout_PK1 = df.XDMFFile(MPI.COMM_WORLD, "PK1_shear_2D_alternative.xdmf")
 
 # iterate over these values:
 stretch_values = np.linspace(0, 0.2, 20)
@@ -69,6 +71,7 @@ shear_load = []
 # solve problem
 for stretch in stretch_values:
     print(f"Domain shear: {100*stretch:.0f}%")
+    #bc_fun.a = stretch
     bc_fun.k = stretch
 
     cm.solve(bcs)
@@ -77,9 +80,11 @@ for stretch in stretch_values:
     load_s = evaluate_shear_load(F, P, mesh, ds, wall_idt, direction)
     normal_load.append(load_n)
     shear_load.append(load_s)
-    fout.write_checkpoint(u, "Displacement (µm)", stretch, append=True)
+    fout_disp.write_checkpoint(u, "Displacement (µm)", stretch, append=True)
+    fout_PK1.write_checkpoint(df.project(PK1, T), "Piola-Kirchhoff stress (kPa)", stretch, append=True)
     
-fout.close()
+fout_disp.close()
+fout_PK1.close()
 
 # finally plot the resulting stretch/stress curve
 plt.plot(100 * stretch_values, normal_load)

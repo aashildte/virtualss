@@ -26,18 +26,18 @@ from virtualss.stretch_xx import (
 )
 
 from virtualss.shear_xy import (
-    shear_xy_fixed_sides,
-    shear_xy_comp,
+    simple_shear_xy,
+    pure_shear_xy,
 )
 
 from virtualss.shear_xz import (
-    shear_xz_fixed_sides,
+    simple_shear_xz,
     shear_xz_comp,
 )
 
 from virtualss.shear_yx import (
-    shear_yx_fixed_sides,
-    shear_yx_comp,
+    simple_shear_yx,
+    pure_shear_yx,
 )
 
 from virtualss.stretch_yy import (
@@ -47,17 +47,17 @@ from virtualss.stretch_yy import (
 )
 
 from virtualss.shear_yz import (
-    shear_yz_fixed_sides,
+    simple_shear_yz,
     shear_yz_comp,
 )
 
 from virtualss.shear_zx import (
-    shear_zx_fixed_sides,
+    simple_shear_zx,
     shear_zx_comp,
 )
 
 from virtualss.shear_zy import (
-    shear_zy_fixed_sides,
+    simple_shear_zy,
     shear_zy_comp,
 )
 

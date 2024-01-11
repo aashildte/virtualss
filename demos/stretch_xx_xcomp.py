@@ -14,16 +14,21 @@ from mpi4py import MPI
 from virtualss import (
     CardiacModel,
     get_boundary_markers,
-    stretch_xx_xcomp,
+    stretch_xx_comp,
     evaluate_normal_load,
 )
 
 # define mesh and cardiac mechanics
-mesh = df.UnitCubeMesh(3, 3, 3)
+N = 10
+#mesh = df.UnitCubeMesh(3, 3, 3)
+mesh = df.UnitSquareMesh(N, N)
 cm = CardiacModel(mesh)
 
-state, test_state, F = cm.state, cm.test_state, cm.F
+# extract variables needed for boundary conditions + for evaluation/tracking
+V, P, F, state, PK1 = cm.V, cm.P, cm.F, cm.state, cm.P
 u, _ = state.split()
+T = df.TensorFunctionSpace(mesh, "CG", 2)
+
 V = cm.state_space.sub(0)
 
 # boundary markers
@@ -31,13 +36,17 @@ boundary_markers, ds = get_boundary_markers(mesh)
 wall_idt = boundary_markers["xmax"]["idt"]
 
 # define weak form terms
-bcs, bcsfun = stretch_xx_xcomp(V, boundary_markers)
+bcs, bcsfun = stretch_xx_comp(V, boundary_markers)
 
 # iterate over these values:
 stretch_values = np.linspace(0, 0.122, 10)
 load_values = []
 
 cm.solve(bcs=bcs)
+
+# track displacement and save to file + save load values
+fout_disp = df.XDMFFile(MPI.COMM_WORLD, "displacement_stretch_2D.xdmf")
+fout_PK1 = df.XDMFFile(MPI.COMM_WORLD, "PK1_stretch_2D.xdmf")
 
 # solve problem
 for i, s in enumerate(stretch_values):
@@ -48,6 +57,12 @@ for i, s in enumerate(stretch_values):
 
     load = evaluate_normal_load(cm.F, cm.P, mesh, ds, wall_idt)
     load_values.append(load)
+
+    fout_disp.write_checkpoint(u, "Displacement (µm)", s, append=True)
+    fout_PK1.write_checkpoint(df.project(PK1, T), "Piola-Kirchhoff stress (kPa)", s, append=True)
+    
+fout_disp.close()
+fout_PK1.close()
 
 
 plt.plot(100*np.array(stretch_values), load_values)

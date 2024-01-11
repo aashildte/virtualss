@@ -2,7 +2,7 @@ import dolfin as df
 from virtualss.deformation_setup import get_corner_coords, get_length, get_width, get_height
 
 
-def shear_zx_fixed_sides(V, boundary_markers):
+def simple_shear_zx(V, boundary_markers):
     """
 
     Defines boundary conditions equivalent to stretch with fixed areas
@@ -27,12 +27,12 @@ def shear_zx_fixed_sides(V, boundary_markers):
     if top_dim == 2:
         raise NotImplementedError("Error: zx shear not implemented in 2D.")
     elif top_dim == 3:
-        return _shear_zx_fixed_sides_3D(V, boundary_markers, mesh)
+        return _simple_shear_zx_3D(V, boundary_markers, mesh)
     else:
         raise NotImplementedError()
 
 
-def _shear_zx_fixed_sides_3D(V, boundary_markers, mesh):
+def _simple_shear_zx_3D(V, boundary_markers, mesh):
     const = df.Constant([0, 0, 0])
 
     height = get_height(mesh)

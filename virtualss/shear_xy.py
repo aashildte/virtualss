@@ -3,7 +3,7 @@ import dolfin as df
 from virtualss.deformation_setup import get_corner_coords, get_length, get_width, get_height
 
 
-def shear_xy_fixed_sides(V, boundary_markers):
+def simple_shear_xy(V, boundary_markers):
     """
 
     Defines boundary conditions equivalent to stretch with fixed areas
@@ -26,14 +26,14 @@ def shear_xy_fixed_sides(V, boundary_markers):
     top_dim = mesh.geometric_dimension()
 
     if top_dim == 2:
-        return _shear_xy_fixed_sides_2D(V, boundary_markers, mesh)
+        return _simple_shear_xy_2D(V, boundary_markers, mesh)
     elif top_dim == 3:
-        return _shear_xy_fixed_sides_3D(V, boundary_markers, mesh)
+        return _simple_shear_xy_3D(V, boundary_markers, mesh)
     else:
         raise NotImplementedError()
 
 
-def _shear_xy_fixed_sides_2D(V, boundary_markers, mesh):
+def _simple_shear_xy_2D(V, boundary_markers, mesh):
     const = df.Constant([0, 0])
     
     length = get_length(mesh)
@@ -49,7 +49,7 @@ def _shear_xy_fixed_sides_2D(V, boundary_markers, mesh):
     return bcs, bcsfun
 
 
-def _shear_xy_fixed_sides_3D(V, boundary_markers, mesh):
+def _simple_shear_xy_3D(V, boundary_markers, mesh):
     const = df.Constant([0, 0, 0])
 
     length = get_length(mesh)
@@ -65,7 +65,7 @@ def _shear_xy_fixed_sides_3D(V, boundary_markers, mesh):
     return bcs, bcsfun
 
 
-def shear_xy_comp(V, boundary_markers):
+def pure_shear_xy(V, boundary_markers):
     """
 
     Defines boundary conditions equivalent to stretch with fixed x comp.
@@ -89,32 +89,33 @@ def shear_xy_comp(V, boundary_markers):
     top_dim = mesh.geometric_dimension()
 
     if top_dim == 2:
-        return _shear_xy_comp_2D(V, boundary_markers, mesh)
+        return _pure_shear_xy_2D(V, boundary_markers, mesh)
     elif top_dim == 3:
-        return _shear_xy_comp_3D(V, boundary_markers, mesh)
+        return _pure_shear_xy_3D(V, boundary_markers, mesh)
     else:
         raise NotImplementedError()
 
 
-def _shear_xy_comp_2D(V, boundary_markers, mesh):
-    # find corner point, which we will fix completely
+def _pure_shear_xy_2D(V, boundary_markers, mesh):
 
-    pt = get_corner_coords(mesh)
-    cb = lambda x, on_boundary: df.near(x[0], pt[0]) and df.near(x[1], pt[1])
-
-    # and sides, which we will fix in one component
+    # find sides, which we will fix in one component each
 
     xmin = boundary_markers["xmin"]["subdomain"]
     xmax = boundary_markers["xmax"]["subdomain"]
-    length = get_length(mesh)
+    ymin = boundary_markers["ymin"]["subdomain"]
+    ymax = boundary_markers["ymax"]["subdomain"]
+    
+    #length = get_length(mesh)
+    #width = get_width(mesh)
 
-    bcsfun = df.Expression("k*L", L=length, k=0, degree=1)
+    bcsfun = df.Expression(("a*x[0] + 1/b*x[1]", "b*x[1]"), b=1e-4, a=0., degree=1)
 
     bcs = [
-        df.DirichletBC(V, df.Constant([0, 0]), cb, "pointwise"),
-        df.DirichletBC(V.sub(0), df.Constant(0), xmin),
-        df.DirichletBC(V.sub(1), bcsfun, xmax),
-    ]
+        df.DirichletBC(V, bcsfun, xmin),
+        df.DirichletBC(V, bcsfun, ymin),
+        df.DirichletBC(V, bcsfun, ymax),
+        df.DirichletBC(V, bcsfun, xmax), 
+        ]
 
     return bcs, bcsfun
 
@@ -137,10 +138,11 @@ def _shear_xy_comp_3D(V, boundary_markers, mesh):
     length = get_length(mesh)
     bcsfun = df.Expression("k*L", L=length, k=0, degree=1)
 
+    assert NotImplementedError, "TODO: Not yet implemented properly"
     bcs = [
         df.DirichletBC(V, df.Constant([0, 0, 0]), cb, "pointwise"),
         df.DirichletBC(V.sub(0), df.Constant(0), xmin),
-        df.DirichletBC(V.sub(1), bcsfun, xmax),
+        df.DirichletBC(V.sub(0), bcsfun, xmax),
     ]
 
     return bcs, bcsfun
