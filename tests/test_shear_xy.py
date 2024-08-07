@@ -15,10 +15,9 @@ from virtualss import (
     CardiacModel,
     get_boundary_markers,
     simple_shear_yx,
-    evaluate_normal_load,
+    evaluate_shear_load,
     evaluate_deformation_xmax,
     evaluate_deformation_ymax,
-    evaluate_deformation_zmax,
 )
 
 
@@ -50,4 +49,12 @@ def test_simple_shear_xy(dim):
 
     assert np.isclose(
         shear_ydir, 0.0
-    ), "Error: Domain not fixed in perpendicular direction" 
+    ), "Error: Domain not fixed in perpendicular direction"
+
+
+    # load value
+    wall_idt = 2   # for xmax
+    direction = "ydir"
+    shear_load = evaluate_shear_load(cm.F, cm.P, cm.U, mesh, ds, wall_idt, direction)
+
+    assert shear_load > 0, "Error: shear load should be positive"

@@ -17,26 +17,26 @@ def _get_normal_vector(wall_idt, dim):
     
     normal_vectors = {
             1: {
-                2 : df.as_vector([1.0, 0.0]),
-                3 : df.as_vector([1.0, 0.0, 0.0]),
-                },
-            2: {
                 2 : df.as_vector([-1.0, 0.0]),
                 3 : df.as_vector([-1.0, 0.0, 0.0]),
                 },
-            3: {
-                2 : df.as_vector([0.0, 1.0]),
-                3 : df.as_vector([0.0, 1.0, 0.0]),
+            2: {
+                2 : df.as_vector([1.0, 0.0]),
+                3 : df.as_vector([1.0, 0.0, 0.0]),
                 },
-            4: {
+            3: {
                 2 : df.as_vector([0.0, -1.0]),
                 3 : df.as_vector([0.0, -1.0, 0.0]),
                 },
+            4: {
+                2 : df.as_vector([0.0, 1.0]),
+                3 : df.as_vector([0.0, 1.0, 0.0]),
+                },
             5: {
-                3 : df.as_vector([0.0, 0.0, 1.0]),
+                3 : df.as_vector([0.0, 0.0, -1.0]),
                 },
             6: {
-                3 : df.as_vector([0.0, 0.0, -1.0]),
+                3 : df.as_vector([0.0, 0.0, 1.0]),
                 },
             }
 
@@ -69,11 +69,10 @@ def evaluate_shear_load(F, P, CG, mesh, ds, wall_idt, direction):
     unit_vector = unit_vectors[direction][top_dim]
     normal_vector = _get_normal_vector(wall_idt, top_dim)
 
-    return evaluate_load(F, P, CG, mesh, ds, wall_idt, unit_vector, normal_vector)
+    return evaluate_load(F, P, CG, mesh, ds, wall_idt, normal_vector, unit_vector)
 
 
 def evaluate_load(F, P, CG, mesh, ds, wall_idt, normal_vector, unit_vector):
-    
     load = df.project(df.inner(P * normal_vector, unit_vector), CG)
 
     total_load = df.assemble(load * ds(wall_idt))

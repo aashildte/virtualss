@@ -14,6 +14,9 @@ from virtualss.load import (
 )
 
 from virtualss.deformation import (
+    evaluate_deformation_xmax,
+    evaluate_deformation_ymax,
+    evaluate_deformation_zmax,
     evaluate_deformation_xdir,
     evaluate_deformation_ydir,
     evaluate_deformation_zdir,
