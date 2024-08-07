@@ -112,7 +112,10 @@ class CardiacModel:
 
         V = state_space.sub(0)
 
-        self.state_space, self.V = state_space, V
+        # for projections
+        U = df.FunctionSpace(mesh, "CG", 1)
+
+        self.state_space, self.V, self.U = state_space, V, U
 
     def define_state_functions(self):
         state_space = self.state_space

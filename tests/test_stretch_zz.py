@@ -86,7 +86,7 @@ def test_stretch_zz_load():
     cm.solve()
 
     wall_idt = boundary_markers["zmax"]["idt"]
-    evaluated_load = evaluate_normal_load(cm.F, cm.P, mesh, ds, wall_idt)
+    evaluated_load = evaluate_normal_load(cm.F, cm.P, cm.U, mesh, ds, wall_idt)
 
     assert np.isclose(
         assigned_load, evaluated_load
