@@ -3,7 +3,7 @@
 Unit tests for the code in the "shear_yx" file, testing shear functions
 by assessing whether resulting shear/load matches applied values.
 
-Åshild Telle / University of Washington / 2023
+Åshild Telle / University of Washington / 2024
 
 """
 
