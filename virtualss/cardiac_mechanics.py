@@ -14,6 +14,7 @@ import dolfin as df
 import ufl
 
 
+
 def psi_holzapfel(
     F,
     dim,
@@ -56,6 +57,82 @@ def psi_holzapfel(
 
     W_hat = a / (2 * b) * (ufl.exp(b * (IIFx - dim)) - 1)
     W_f = a_f / (2 * b_f) * (ufl.exp(b_f * cond(I4e1 - 1) ** 2) - 1)
+
+    return W_hat + W_f
+
+
+def psi_mendiola_fung(F, dim, c, B1, B2, B3):
+    J = ufl.det(F)
+    J_iso = pow(J, -float(1) / dim)
+    C = F.T * F
+    C_iso = J_iso ** 2 * C
+    I = df.Identity(dim)
+    E = 0.5*(C - I)
+    E_iso = 0.5*(C_iso - I)
+
+    if dim == 2:
+        e1 = ufl.as_vector([1.0, 0.0])
+        e2 = ufl.as_vector([0.0, 1.0])
+    else:
+        e1 = ufl.as_vector([1.0, 0.0, 0.0])
+        e2 = ufl.as_vector([0.0, 1.0, 0.0])
+        e3 = ufl.as_vector([0.0, 0.0, 1.0])
+
+    E_11 = df.inner(E_iso*e1, e1)
+    E_12 = df.inner(E_iso*e1, e2)
+    E_13 = df.inner(E_iso*e1, e3)
+    E_22 = df.inner(E_iso*e2, e2)
+    E_23 = df.inner(E_iso*e2, e3)
+    E_33 = df.inner(E_iso*e3, e3)
+
+    Q = B1*E_11**2 + B2*(E_22**2 + E_33**2 + E_23**2) + B3*(E_12**2 + E_13**2)
+
+    return c*ufl.exp(Q - 1)
+
+
+def psi_holzapfel_with_dispersion(
+    F,
+    dim,
+    a=2.92,
+    b=5.6,
+    a_f=11.84,
+    b_f=17.95,
+    delta_f=0.09,
+):
+    """
+
+    Declares the strain energy function for a simplified holzapfel formulation.
+
+    Args:
+        F - deformation tensor
+        dim - number of dimensions; 2 or 3
+        a - isotropic contribution (in kPa)
+        b - isotropic exponential
+        a_f - fiber direction contribution under stretch (in kPa)
+        b_f - fiber direction exponential
+
+    Returns:
+        psi(F), scalar function
+
+    """
+    
+    J = ufl.det(F)
+    J_iso = pow(J, -float(1) / dim)
+    C = F.T * F
+    C_iso = J_iso ** 2 * C
+
+    if dim == 2:
+        e1 = ufl.as_vector([1.0, 0.0])
+    else:
+        e1 = ufl.as_vector([1.0, 0.0, 0.0])
+
+    IIFx = ufl.tr(C_iso)
+    I4e1 = ufl.inner(C * e1, e1)
+
+    cond = lambda a: ufl.conditional(a > 0, a, 0)
+
+    W_hat = a / (2 * b) * (ufl.exp(b * (IIFx - dim)) - 1)
+    W_f = a_f / (2 * b_f) * (ufl.exp(b_f * (delta_f*IIFx + (1 - dim*delta_f)*I4e1 - 1) ** 2) - 1)
 
     return W_hat + W_f
 
@@ -137,7 +214,8 @@ class CardiacModel:
         F = ufl.variable(I + ufl.grad(u))  # Deformation gradient
         J = ufl.det(F)
         
-        psi = psi_holzapfel(F, dim=dim, **self.material_parameters)
+        psi = psi_holzapfel_with_dispersion(F, dim=dim, **self.material_parameters)
+        #psi = psi_mendiola_fung(F, dim, **self.material_parameters)
         P = ufl.diff(psi, F) + p * J * ufl.inv(F.T)
 
         self.P, self.F, self.J, = P, F, J

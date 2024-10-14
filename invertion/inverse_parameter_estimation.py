@@ -89,17 +89,17 @@ def sheet_dir_stretch(mesh, material_parameters, stretch_goal):
 import sys
 
 # set parameters for either fiber or transverse direction stretch here!
-fiber_dir = 1  # 0 for sheet/transverse direction stretch
+fiber_dir = 0  # 1 for fiber; 0 for sheet/transverse direction stretch
 
 if fiber_dir == 1:
-    a_scaling = [1.0, 1.0]
-    af_scaling = [1.0, 2.1411]  # values found by manual adjustment
+    a_scaling = [1.0, 0.963]
+    af_scaling = [1.0, 2.293]  # 2nd values found by manual adjustment
     alpha_fiber = 1
     alpha_transv = 0.2
     filename = "fiber_direction_stretch_pertubration.png"
 else:
-    a_scaling = [1.0, 2.0]       # values found by manual adjustment
-    af_scaling = [1.0, 0.8587]      # values found by manual adjustment
+    a_scaling = [1.0, 2.151]       # values found by manual adjustment
+    af_scaling = [1.0, 0.675]      # values found by manual adjustment
     alpha_fiber = 0.2
     alpha_transv = 1
     filename = "transverse_direction_stretch_pertubration.png"
@@ -183,15 +183,17 @@ plt.legend(
 )
 
 l1, l2 = fiber_loads_final
+
+print(l1, l2)
 print("Load difference in fiber direction stretch: ")
 print(
-    f"* Increase: {round((l2 - l1)/l2*100, 2)}%"
+    f"* Increase: {round((l2-l1)/l1*100, 2)}%"
 )
 
 l1, l2 = sheet_loads_final
 print("Load difference in transverse direction stretch: ")
 print(
-    f"* Increase: {round((l2 - l1)/l2*100, 2)}%"
+    f"* Increase: {round((l2-l1)/l1*100, 2)}%"
 )
 
 exit()
