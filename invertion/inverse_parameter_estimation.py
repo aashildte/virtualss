@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import dolfin as df
 
+from virtualss.cardiac_mechanics_atrial import CardiacModel
+
 from virtualss import (
-    CardiacModel,
     get_boundary_markers,
     stretch_xx_comp,
     stretch_yy_comp,
@@ -23,9 +24,10 @@ from virtualss import (
 def fiber_dir_stretch(mesh, material_parameters, stretch_goal):
     cm = CardiacModel(mesh, material_parameters=material_parameters)
     state, test_state, F = cm.state, cm.test_state, cm.F
-    u, _ = state.split()
-    V = cm.state_space.sub(0)
-
+    #u, _ = state.split()
+    V = cm.V
+    print(V)
+    
     # boundary markers
     boundary_markers, ds = get_boundary_markers(mesh)
     wall_idt = boundary_markers["xmax"]["idt"]
@@ -98,7 +100,7 @@ if fiber_dir == 1:
     alpha_transv = 0.2
     filename = "fiber_direction_stretch_pertubration.png"
 else:
-    a_scaling = [1.0, 2.151]       # values found by manual adjustment
+    a_scaling = [1.0, 2.157]        # values found by manual adjustment
     af_scaling = [1.0, 0.675]      # values found by manual adjustment
     alpha_fiber = 0.2
     alpha_transv = 1
